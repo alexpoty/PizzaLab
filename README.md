@@ -10,6 +10,22 @@ Stack:
 - Spring Boot
 - Gradle Kotlin DSL
 
+## Frontend
+
+Stack:
+
+- React
+- TypeScript
+- Vite
+
+Run locally:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
 Planned first endpoint:
 
 ```http
