@@ -3,7 +3,10 @@ package com.pizzalab.backend.api.dough
 import com.pizzalab.backend.application.CalculateDoughUseCase
 import com.pizzalab.backend.domain.model.DoughFormula
 import com.pizzalab.backend.domain.model.DoughIngredients
+import com.pizzalab.backend.domain.model.DoughMethod
 import com.pizzalab.backend.domain.model.FinalMixBreakdown
+import com.pizzalab.backend.domain.model.FermentationMode
+import com.pizzalab.backend.domain.model.FermentationPreset
 import com.pizzalab.backend.domain.model.FermentationSchedule
 import com.pizzalab.backend.domain.model.PrefermentBreakdown
 import jakarta.validation.Valid
@@ -30,9 +33,21 @@ class DoughController(
             saltPercent = saltPercent,
             yeastType = yeastType,
             doughMethod = doughMethod,
-            fermentationSchedule = fermentationSchedule.toDomain(),
+            fermentationSchedule = resolveFermentationSchedule(),
             prefermentFlourPercent = prefermentFlourPercent,
         )
+
+    private fun DoughCalculationRequest.resolveFermentationSchedule(): FermentationSchedule {
+        if (fermentationSchedule != null) {
+            return fermentationSchedule.toDomain()
+        }
+
+        return fermentationPreset?.toSchedule(
+            doughMethod = doughMethod,
+            roomTemperatureCelsius = roomTemperatureCelsius,
+            coldTemperatureCelsius = coldTemperatureCelsius,
+        ) ?: throw IllegalArgumentException("Either fermentationSchedule or fermentationPreset must be provided.")
+    }
 
     private fun FermentationScheduleRequest.toDomain(): FermentationSchedule =
         FermentationSchedule(
@@ -42,6 +57,65 @@ class DoughController(
             coldHours = coldHours,
             coldTemperatureCelsius = coldTemperatureCelsius,
         )
+
+    private fun FermentationPreset.toSchedule(
+        doughMethod: DoughMethod,
+        roomTemperatureCelsius: Double?,
+        coldTemperatureCelsius: Double?,
+    ): FermentationSchedule =
+        when (this) {
+            FermentationPreset.ROOM_24H ->
+                FermentationSchedule(
+                    mode = FermentationMode.ROOM,
+                    roomHours = 24.0,
+                    roomTemperatureCelsius = roomTemperatureCelsius.requiredFor("ROOM_24H"),
+                )
+
+            FermentationPreset.COLD_24H ->
+                FermentationSchedule(
+                    mode = FermentationMode.COLD,
+                    coldHours = 24.0,
+                    coldTemperatureCelsius = coldTemperatureCelsius.requiredFor("COLD_24H"),
+                )
+
+            FermentationPreset.POOLISH_ROOM_16H_COLD_24H -> {
+                require(doughMethod == DoughMethod.POOLISH) {
+                    "POOLISH_ROOM_16H_COLD_24H requires doughMethod POOLISH."
+                }
+                mixedPrefermentSchedule(
+                    presetName = "POOLISH_ROOM_16H_COLD_24H",
+                    roomTemperatureCelsius = roomTemperatureCelsius,
+                    coldTemperatureCelsius = coldTemperatureCelsius,
+                )
+            }
+
+            FermentationPreset.BIGA_ROOM_16H_COLD_24H -> {
+                require(doughMethod == DoughMethod.BIGA) {
+                    "BIGA_ROOM_16H_COLD_24H requires doughMethod BIGA."
+                }
+                mixedPrefermentSchedule(
+                    presetName = "BIGA_ROOM_16H_COLD_24H",
+                    roomTemperatureCelsius = roomTemperatureCelsius,
+                    coldTemperatureCelsius = coldTemperatureCelsius,
+                )
+            }
+        }
+
+    private fun mixedPrefermentSchedule(
+        presetName: String,
+        roomTemperatureCelsius: Double?,
+        coldTemperatureCelsius: Double?,
+    ): FermentationSchedule =
+        FermentationSchedule(
+            mode = FermentationMode.MIXED,
+            roomHours = 16.0,
+            roomTemperatureCelsius = roomTemperatureCelsius.requiredFor(presetName),
+            coldHours = 24.0,
+            coldTemperatureCelsius = coldTemperatureCelsius.requiredFor(presetName),
+        )
+
+    private fun Double?.requiredFor(presetName: String): Double =
+        this ?: throw IllegalArgumentException("$presetName requires temperature input.")
 
     private fun DoughIngredients.toResponse(): DoughCalculationResponse =
         DoughCalculationResponse(
