@@ -70,6 +70,24 @@ Manual fermentation schedules are also supported:
 ```
 
 For `POOLISH` and `BIGA`, the response includes both `preferment` and `finalMix` blocks.
+The response also includes `yeastCalculation` details for explaining the selected yeast amount.
+
+Example yeast calculation block:
+
+```json
+{
+  "yeastCalculation": {
+    "yeastType": "INSTANT",
+    "doughMethod": "DIRECT",
+    "roomEffectHours": 5.7,
+    "coldEffectHours": 0.0,
+    "effectiveFermentationHours": 5.7,
+    "methodFactor": 1.0,
+    "freshYeastEquivalentGrams": 1.2,
+    "selectedYeastGrams": 0.4
+  }
+}
+```
 
 Supported dough methods:
 

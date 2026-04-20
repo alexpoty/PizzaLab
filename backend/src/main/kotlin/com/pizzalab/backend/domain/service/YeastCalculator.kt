@@ -2,6 +2,8 @@ package com.pizzalab.backend.domain.service
 
 import com.pizzalab.backend.domain.model.DoughMethod
 import com.pizzalab.backend.domain.model.FermentationSchedule
+import com.pizzalab.backend.domain.model.YeastCalculation
+import com.pizzalab.backend.domain.model.YeastCalculationDetails
 import com.pizzalab.backend.domain.model.YeastType
 import kotlin.math.max
 import kotlin.math.pow
@@ -12,7 +14,8 @@ class YeastCalculator {
         yeastType: YeastType,
         doughMethod: DoughMethod,
         hydrationPercent: Double,
-    ): Double {
+        flourGrams: Double,
+    ): YeastCalculation {
         val roomEffect = schedule.roomHours * temperatureFactor(schedule.roomTemperatureCelsius, ReferenceRoomTemperatureCelsius)
         val coldEffect = schedule.coldHours *
             ColdRetardationFactor *
@@ -25,13 +28,36 @@ class YeastCalculator {
             DoughMethod.BIGA -> 0.65
         }
 
-        val freshYeastPercent = (ReferenceFreshYeastPercent * ReferenceRoomHours / effectiveHours)
+        val minFreshYeastPercent = minFreshYeastPercent(hydrationPercent)
+        val maxFreshYeastPercent = maxFreshYeastPercent(hydrationPercent)
+        val freshYeastPercentBeforeMethodFactor = (ReferenceFreshYeastPercent * ReferenceRoomHours / effectiveHours)
             .coerceIn(
-                minimumValue = minFreshYeastPercent(hydrationPercent),
-                maximumValue = maxFreshYeastPercent(hydrationPercent),
-            ) * methodFactor
+                minimumValue = minFreshYeastPercent,
+                maximumValue = maxFreshYeastPercent,
+            )
+        val freshYeastPercent = freshYeastPercentBeforeMethodFactor * methodFactor
+        val selectedYeastPercent = freshYeastPercent / yeastType.freshYeastRatio
+        val selectedYeastGrams = flourGrams * selectedYeastPercent / 100.0
+        val freshYeastEquivalentGrams = flourGrams * freshYeastPercent / 100.0
 
-        return freshYeastPercent / yeastType.freshYeastRatio
+        return YeastCalculation(
+            selectedYeastPercent = selectedYeastPercent,
+            details = YeastCalculationDetails(
+                yeastType = yeastType,
+                doughMethod = doughMethod,
+                roomEffectHours = roomEffect,
+                coldEffectHours = coldEffect,
+                effectiveFermentationHours = effectiveHours,
+                methodFactor = methodFactor,
+                minFreshYeastPercent = minFreshYeastPercent,
+                maxFreshYeastPercent = maxFreshYeastPercent,
+                freshYeastPercentBeforeMethodFactor = freshYeastPercentBeforeMethodFactor,
+                freshYeastPercent = freshYeastPercent,
+                selectedYeastPercent = selectedYeastPercent,
+                freshYeastEquivalentGrams = freshYeastEquivalentGrams,
+                selectedYeastGrams = selectedYeastGrams,
+            ),
+        )
     }
 
     private fun temperatureFactor(actual: Double, base: Double): Double =

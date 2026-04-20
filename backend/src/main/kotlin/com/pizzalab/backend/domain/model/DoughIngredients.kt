@@ -8,4 +8,5 @@ data class DoughIngredients(
     val totalDoughWeightGrams: Double,
     val preferment: PrefermentBreakdown? = null,
     val finalMix: FinalMixBreakdown,
+    val yeastCalculation: YeastCalculationDetails,
 )
