@@ -166,12 +166,14 @@ class DoughControllerTest(
         }
             .andExpect {
                 status { isOk() }
-                jsonPath("$.flourGrams") { value(595.7) }
-                jsonPath("$.waterGrams") { value(387.2) }
-                jsonPath("$.saltGrams") { value(16.7) }
-                jsonPath("$.yeastGrams") { value(0.4) }
-                jsonPath("$.yeastCalculation.coldEffectHours") { value(5.8) }
-                jsonPath("$.yeastCalculation.effectiveFermentationHours") { value(5.8) }
+                jsonPath("$.flourGrams") { value(593.7) }
+                jsonPath("$.waterGrams") { value(385.9) }
+                jsonPath("$.saltGrams") { value(16.6) }
+                jsonPath("$.yeastGrams") { value(3.8) }
+                jsonPath("$.yeastCalculation.coldEffectHours") { value(22.4) }
+                jsonPath("$.yeastCalculation.effectiveFermentationHours") { value(22.4) }
+                jsonPath("$.yeastCalculation.freshYeastPercent") { value(1.9292) }
+                jsonPath("$.yeastCalculation.selectedYeastPercent") { value(0.6431) }
             }
     }
 
@@ -196,18 +198,65 @@ class DoughControllerTest(
         }
             .andExpect {
                 status { isOk() }
-                jsonPath("$.yeastGrams") { value(0.6) }
-                jsonPath("$.preferment.flourGrams") { value(178.7) }
-                jsonPath("$.preferment.waterGrams") { value(178.7) }
+                jsonPath("$.yeastGrams") { value(4.0) }
+                jsonPath("$.preferment.flourGrams") { value(178.1) }
+                jsonPath("$.preferment.waterGrams") { value(178.1) }
                 jsonPath("$.preferment.yeastGrams") { value(0.2) }
-                jsonPath("$.finalMix.flourGrams") { value(416.9) }
-                jsonPath("$.finalMix.waterGrams") { value(208.4) }
-                jsonPath("$.finalMix.yeastGrams") { value(0.4) }
+                jsonPath("$.finalMix.flourGrams") { value(415.5) }
+                jsonPath("$.finalMix.waterGrams") { value(207.7) }
+                jsonPath("$.finalMix.yeastGrams") { value(3.8) }
                 jsonPath("$.yeastCalculation.roomEffectHours") { value(11.3) }
-                jsonPath("$.yeastCalculation.coldEffectHours") { value(5.8) }
-                jsonPath("$.yeastCalculation.effectiveFermentationHours") { value(17.1) }
+                jsonPath("$.yeastCalculation.coldEffectHours") { value(22.4) }
+                jsonPath("$.yeastCalculation.effectiveFermentationHours") { value(33.7) }
                 jsonPath("$.yeastCalculation.prefermentYeastGrams") { value(0.2) }
-                jsonPath("$.yeastCalculation.finalMixYeastGrams") { value(0.4) }
+                jsonPath("$.yeastCalculation.finalMixYeastGrams") { value(3.8) }
+            }
+    }
+
+    @Test
+    fun `calibrates direct cold fermentation at five celsius`() {
+        mockMvc.post("/api/dough/calculate") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "pizzaCount": 4,
+                  "doughBallWeightGrams": 270,
+                  "hydrationPercent": 62,
+                  "saltPercent": 3,
+                  "yeastType": "FRESH",
+                  "doughMethod": "DIRECT",
+                  "fermentationPreset": "COLD_24H",
+                  "coldTemperatureCelsius": 5
+                }
+            """.trimIndent()
+        }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.yeastGrams") { value(11.7) }
+                jsonPath("$.yeastCalculation.freshYeastPercent") { value(1.8) }
+                jsonPath("$.yeastCalculation.selectedYeastPercent") { value(1.8) }
+            }
+
+        mockMvc.post("/api/dough/calculate") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "pizzaCount": 4,
+                  "doughBallWeightGrams": 270,
+                  "hydrationPercent": 62,
+                  "saltPercent": 3,
+                  "yeastType": "FRESH",
+                  "doughMethod": "DIRECT",
+                  "fermentationPreset": "COLD_48H",
+                  "coldTemperatureCelsius": 5
+                }
+            """.trimIndent()
+        }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.yeastGrams") { value(4.6) }
+                jsonPath("$.yeastCalculation.freshYeastPercent") { value(0.7) }
+                jsonPath("$.yeastCalculation.selectedYeastPercent") { value(0.7) }
             }
     }
 

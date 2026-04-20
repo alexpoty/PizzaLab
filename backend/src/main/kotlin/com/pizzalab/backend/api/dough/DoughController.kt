@@ -79,6 +79,13 @@ class DoughController(
                     coldTemperatureCelsius = coldTemperatureCelsius.requiredFor("COLD_24H"),
                 )
 
+            FermentationPreset.COLD_48H ->
+                FermentationSchedule(
+                    mode = FermentationMode.COLD,
+                    coldHours = 48.0,
+                    coldTemperatureCelsius = coldTemperatureCelsius.requiredFor("COLD_48H"),
+                )
+
             FermentationPreset.POOLISH_ROOM_16H_COLD_24H -> {
                 require(doughMethod == DoughMethod.POOLISH) {
                     "POOLISH_ROOM_16H_COLD_24H requires doughMethod POOLISH."
