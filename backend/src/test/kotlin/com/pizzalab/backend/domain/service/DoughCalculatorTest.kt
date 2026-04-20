@@ -31,16 +31,16 @@ class DoughCalculatorTest {
             ),
         )
 
-        assertEquals(595.3, result.flourGrams)
-        assertEquals(387.0, result.waterGrams)
+        assertEquals(595.7, result.flourGrams)
+        assertEquals(387.2, result.waterGrams)
         assertEquals(16.7, result.saltGrams)
-        assertEquals(1.1, result.yeastGrams)
+        assertEquals(0.4, result.yeastGrams)
         assertEquals(1000.0, result.totalDoughWeightGrams)
         assertNull(result.preferment)
-        assertEquals(595.3, result.finalMix.flourGrams)
-        assertEquals(387.0, result.finalMix.waterGrams)
+        assertEquals(595.7, result.finalMix.flourGrams)
+        assertEquals(387.2, result.finalMix.waterGrams)
         assertEquals(16.7, result.finalMix.saltGrams)
-        assertEquals(1.1, result.finalMix.yeastGrams)
+        assertEquals(0.4, result.finalMix.yeastGrams)
     }
 
     @Test
@@ -63,7 +63,7 @@ class DoughCalculatorTest {
             ),
         )
 
-        assertEquals(0.9, result.yeastGrams)
+        assertEquals(0.2, result.yeastGrams)
     }
 
     @Test
@@ -88,10 +88,47 @@ class DoughCalculatorTest {
         val preferment = assertNotNull(result.preferment)
         assertEquals(178.7, preferment.flourGrams)
         assertEquals(178.7, preferment.waterGrams)
-        assertEquals(0.5, preferment.yeastGrams)
-        assertEquals(417.0, result.finalMix.flourGrams)
-        assertEquals(208.5, result.finalMix.waterGrams)
+        assertEquals(0.2, preferment.yeastGrams)
+        assertEquals(417.1, result.finalMix.flourGrams)
+        assertEquals(208.6, result.finalMix.waterGrams)
         assertEquals(16.7, result.finalMix.saltGrams)
         assertEquals(0.0, result.finalMix.yeastGrams)
+    }
+
+    @Test
+    fun `converts instant yeast amount to fresh yeast amount`() {
+        val instantResult = calculator.calculate(
+            DoughFormula(
+                pizzaCount = 4,
+                doughBallWeightGrams = 250.0,
+                hydrationPercent = 65.0,
+                saltPercent = 2.8,
+                yeastType = YeastType.INSTANT,
+                doughMethod = DoughMethod.DIRECT,
+                fermentationSchedule = FermentationSchedule(
+                    mode = FermentationMode.ROOM,
+                    roomHours = 8.0,
+                    roomTemperatureCelsius = 20.0,
+                ),
+            ),
+        )
+        val freshResult = calculator.calculate(
+            DoughFormula(
+                pizzaCount = 4,
+                doughBallWeightGrams = 250.0,
+                hydrationPercent = 65.0,
+                saltPercent = 2.8,
+                yeastType = YeastType.FRESH,
+                doughMethod = DoughMethod.DIRECT,
+                fermentationSchedule = FermentationSchedule(
+                    mode = FermentationMode.ROOM,
+                    roomHours = 8.0,
+                    roomTemperatureCelsius = 20.0,
+                ),
+            ),
+        )
+
+        assertEquals(0.4, instantResult.yeastGrams)
+        assertEquals(1.2, freshResult.yeastGrams)
     }
 }

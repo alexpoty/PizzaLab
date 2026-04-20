@@ -85,3 +85,16 @@ Supported fermentation presets:
 - `COLD_24H`: 24 hours in the refrigerator. Requires `coldTemperatureCelsius`.
 - `POOLISH_ROOM_16H_COLD_24H`: 16 hours at room temperature, then 24 hours in the refrigerator. Requires `doughMethod: "POOLISH"`, `roomTemperatureCelsius`, and `coldTemperatureCelsius`.
 - `BIGA_ROOM_16H_COLD_24H`: 16 hours at room temperature, then 24 hours in the refrigerator. Requires `doughMethod: "BIGA"`, `roomTemperatureCelsius`, and `coldTemperatureCelsius`.
+
+## Yeast model
+
+The first yeast model is calibrated from AVPN-style Neapolitan dough ranges:
+
+- fresh yeast is the reference type;
+- dry yeast is calculated as one third of fresh yeast;
+- fresh yeast is clamped to 0.1-3 g per 1 liter of water;
+- temperature changes use a Q10-style yeast activity factor;
+- cold fermentation applies an additional retardation factor;
+- poolish and biga use lower yeast factors than direct dough.
+
+This model is intentionally explicit and test-covered so it can be calibrated with real bake results later.
