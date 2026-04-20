@@ -26,13 +26,8 @@ Example request:
   "saltPercent": 2.8,
   "yeastType": "INSTANT",
   "doughMethod": "DIRECT",
-  "fermentationSchedule": {
-    "mode": "MIXED",
-    "roomHours": 2,
-    "roomTemperatureCelsius": 20,
-    "coldHours": 24,
-    "coldTemperatureCelsius": 4
-  }
+  "fermentationPreset": "ROOM_24H",
+  "roomTemperatureCelsius": 20
 }
 ```
 
@@ -46,11 +41,30 @@ Example poolish request:
   "saltPercent": 2.8,
   "yeastType": "INSTANT",
   "doughMethod": "POOLISH",
+  "fermentationPreset": "POOLISH_ROOM_16H_COLD_24H",
+  "roomTemperatureCelsius": 20,
+  "coldTemperatureCelsius": 4,
+  "prefermentFlourPercent": 30
+}
+```
+
+Manual fermentation schedules are also supported:
+
+```json
+{
+  "pizzaCount": 4,
+  "doughBallWeightGrams": 250,
+  "hydrationPercent": 65,
+  "saltPercent": 2.8,
+  "yeastType": "INSTANT",
+  "doughMethod": "POOLISH",
   "prefermentFlourPercent": 30,
   "fermentationSchedule": {
-    "mode": "ROOM",
-    "roomHours": 12,
-    "roomTemperatureCelsius": 20
+    "mode": "MIXED",
+    "roomHours": 16,
+    "roomTemperatureCelsius": 20,
+    "coldHours": 24,
+    "coldTemperatureCelsius": 4
   }
 }
 ```
@@ -64,3 +78,10 @@ Supported dough methods:
 - `BIGA`
 
 Neapolitan dough does not include oil or sugar in the base formula.
+
+Supported fermentation presets:
+
+- `ROOM_24H`: 24 hours at room temperature. Requires `roomTemperatureCelsius`.
+- `COLD_24H`: 24 hours in the refrigerator. Requires `coldTemperatureCelsius`.
+- `POOLISH_ROOM_16H_COLD_24H`: 16 hours at room temperature, then 24 hours in the refrigerator. Requires `doughMethod: "POOLISH"`, `roomTemperatureCelsius`, and `coldTemperatureCelsius`.
+- `BIGA_ROOM_16H_COLD_24H`: 16 hours at room temperature, then 24 hours in the refrigerator. Requires `doughMethod: "BIGA"`, `roomTemperatureCelsius`, and `coldTemperatureCelsius`.

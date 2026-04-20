@@ -111,4 +111,112 @@ class DoughControllerTest(
                 }
             }
     }
+
+    @Test
+    fun `calculates room temperature preset`() {
+        mockMvc.post("/api/dough/calculate") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "pizzaCount": 4,
+                  "doughBallWeightGrams": 250,
+                  "hydrationPercent": 65,
+                  "saltPercent": 2.8,
+                  "yeastType": "INSTANT",
+                  "doughMethod": "DIRECT",
+                  "fermentationPreset": "ROOM_24H",
+                  "roomTemperatureCelsius": 20
+                }
+            """.trimIndent()
+        }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.flourGrams") { value(595.7) }
+                jsonPath("$.waterGrams") { value(387.2) }
+                jsonPath("$.saltGrams") { value(16.7) }
+                jsonPath("$.yeastGrams") { value(0.4) }
+            }
+    }
+
+    @Test
+    fun `calculates cold fermentation preset`() {
+        mockMvc.post("/api/dough/calculate") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "pizzaCount": 4,
+                  "doughBallWeightGrams": 250,
+                  "hydrationPercent": 65,
+                  "saltPercent": 2.8,
+                  "yeastType": "INSTANT",
+                  "doughMethod": "DIRECT",
+                  "fermentationPreset": "COLD_24H",
+                  "coldTemperatureCelsius": 4
+                }
+            """.trimIndent()
+        }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.flourGrams") { value(594.2) }
+                jsonPath("$.waterGrams") { value(386.2) }
+                jsonPath("$.saltGrams") { value(16.6) }
+                jsonPath("$.yeastGrams") { value(3.0) }
+            }
+    }
+
+    @Test
+    fun `calculates poolish room and cold fermentation preset`() {
+        mockMvc.post("/api/dough/calculate") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "pizzaCount": 4,
+                  "doughBallWeightGrams": 250,
+                  "hydrationPercent": 65,
+                  "saltPercent": 2.8,
+                  "yeastType": "INSTANT",
+                  "doughMethod": "POOLISH",
+                  "fermentationPreset": "POOLISH_ROOM_16H_COLD_24H",
+                  "roomTemperatureCelsius": 20,
+                  "coldTemperatureCelsius": 4,
+                  "prefermentFlourPercent": 30
+                }
+            """.trimIndent()
+        }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.preferment.flourGrams") { value(178.7) }
+                jsonPath("$.preferment.waterGrams") { value(178.7) }
+                jsonPath("$.preferment.yeastGrams") { value(0.3) }
+                jsonPath("$.finalMix.flourGrams") { value(417.1) }
+                jsonPath("$.finalMix.waterGrams") { value(208.6) }
+                jsonPath("$.finalMix.yeastGrams") { value(0.0) }
+            }
+    }
+
+    @Test
+    fun `returns bad request when poolish preset is used with direct method`() {
+        mockMvc.post("/api/dough/calculate") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "pizzaCount": 4,
+                  "doughBallWeightGrams": 250,
+                  "hydrationPercent": 65,
+                  "saltPercent": 2.8,
+                  "yeastType": "INSTANT",
+                  "doughMethod": "DIRECT",
+                  "fermentationPreset": "POOLISH_ROOM_16H_COLD_24H",
+                  "roomTemperatureCelsius": 20,
+                  "coldTemperatureCelsius": 4
+                }
+            """.trimIndent()
+        }
+            .andExpect {
+                status { isBadRequest() }
+                jsonPath("$.message") {
+                    value("POOLISH_ROOM_16H_COLD_24H requires doughMethod POOLISH.")
+                }
+            }
+    }
 }
