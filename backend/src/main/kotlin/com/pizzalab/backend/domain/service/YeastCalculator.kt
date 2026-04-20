@@ -1,6 +1,7 @@
 package com.pizzalab.backend.domain.service
 
 import com.pizzalab.backend.domain.model.DoughMethod
+import com.pizzalab.backend.domain.model.FermentationMode
 import com.pizzalab.backend.domain.model.FermentationSchedule
 import com.pizzalab.backend.domain.model.YeastCalculation
 import com.pizzalab.backend.domain.model.YeastCalculationDetails
@@ -16,6 +17,14 @@ class YeastCalculator {
         hydrationPercent: Double,
         flourGrams: Double,
     ): YeastCalculation {
+        if (doughMethod == DoughMethod.DIRECT && schedule.mode == FermentationMode.COLD) {
+            return calculateDirectColdYeast(
+                schedule = schedule,
+                yeastType = yeastType,
+                flourGrams = flourGrams,
+            )
+        }
+
         val roomEffect = schedule.roomHours * temperatureFactor(schedule.roomTemperatureCelsius, ReferenceRoomTemperatureCelsius)
         val coldEffect = schedule.coldHours *
             ColdRetardationFactor *
@@ -56,6 +65,44 @@ class YeastCalculator {
                 selectedYeastPercent = selectedYeastPercent,
                 freshYeastEquivalentGrams = freshYeastEquivalentGrams,
                 selectedYeastGrams = selectedYeastGrams,
+                prefermentYeastGrams = 0.0,
+                finalMixYeastGrams = selectedYeastGrams,
+            ),
+        )
+    }
+
+    private fun calculateDirectColdYeast(
+        schedule: FermentationSchedule,
+        yeastType: YeastType,
+        flourGrams: Double,
+    ): YeastCalculation {
+        val coldEffect = schedule.coldHours * temperatureFactor(schedule.coldTemperatureCelsius, DirectColdReferenceTemperatureCelsius)
+        val freshYeastPercentAtReferenceTemperature =
+            DirectColdFreshYeastPercentAt24Hours * (schedule.coldHours / 24.0).pow(DirectColdTimeExponent)
+        val freshYeastPercent = freshYeastPercentAtReferenceTemperature /
+            temperatureFactor(schedule.coldTemperatureCelsius, DirectColdReferenceTemperatureCelsius)
+        val selectedYeastPercent = freshYeastPercent / yeastType.freshYeastRatio
+        val selectedYeastGrams = flourGrams * selectedYeastPercent / 100.0
+        val freshYeastEquivalentGrams = flourGrams * freshYeastPercent / 100.0
+
+        return YeastCalculation(
+            selectedYeastPercent = selectedYeastPercent,
+            details = YeastCalculationDetails(
+                yeastType = yeastType,
+                doughMethod = DoughMethod.DIRECT,
+                roomEffectHours = 0.0,
+                coldEffectHours = coldEffect,
+                effectiveFermentationHours = coldEffect,
+                methodFactor = 1.0,
+                minFreshYeastPercent = DirectColdFreshYeastPercentAt48Hours,
+                maxFreshYeastPercent = DirectColdFreshYeastPercentAt24Hours,
+                freshYeastPercentBeforeMethodFactor = freshYeastPercent,
+                freshYeastPercent = freshYeastPercent,
+                selectedYeastPercent = selectedYeastPercent,
+                freshYeastEquivalentGrams = freshYeastEquivalentGrams,
+                selectedYeastGrams = selectedYeastGrams,
+                prefermentYeastGrams = 0.0,
+                finalMixYeastGrams = selectedYeastGrams,
             ),
         )
     }
@@ -83,5 +130,11 @@ class YeastCalculator {
         const val ColdRetardationFactor = 0.24
         const val MinFreshYeastGramsPerWaterLiter = 0.1
         const val MaxFreshYeastGramsPerWaterLiter = 3.0
+        const val DirectColdReferenceTemperatureCelsius = 5.0
+        const val DirectColdFreshYeastPercentAt24Hours = 1.8
+        const val DirectColdFreshYeastPercentAt48Hours = 0.7
+        val DirectColdTimeExponent: Double =
+            kotlin.math.ln(DirectColdFreshYeastPercentAt48Hours / DirectColdFreshYeastPercentAt24Hours) /
+                kotlin.math.ln(48.0 / 24.0)
     }
 }
