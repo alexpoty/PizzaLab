@@ -38,15 +38,15 @@ class DoughControllerTest(
         }
             .andExpect {
                 status { isOk() }
-                jsonPath("$.flourGrams") { value(595.3) }
-                jsonPath("$.waterGrams") { value(387.0) }
+                jsonPath("$.flourGrams") { value(595.7) }
+                jsonPath("$.waterGrams") { value(387.2) }
                 jsonPath("$.saltGrams") { value(16.7) }
-                jsonPath("$.yeastGrams") { value(1.1) }
+                jsonPath("$.yeastGrams") { value(0.4) }
                 jsonPath("$.preferment") { value(nullValue()) }
-                jsonPath("$.finalMix.flourGrams") { value(595.3) }
-                jsonPath("$.finalMix.waterGrams") { value(387.0) }
+                jsonPath("$.finalMix.flourGrams") { value(595.7) }
+                jsonPath("$.finalMix.waterGrams") { value(387.2) }
                 jsonPath("$.finalMix.saltGrams") { value(16.7) }
-                jsonPath("$.finalMix.yeastGrams") { value(1.1) }
+                jsonPath("$.finalMix.yeastGrams") { value(0.4) }
             }
     }
 
@@ -75,9 +75,9 @@ class DoughControllerTest(
                 status { isOk() }
                 jsonPath("$.preferment.flourGrams") { value(178.7) }
                 jsonPath("$.preferment.waterGrams") { value(178.7) }
-                jsonPath("$.preferment.yeastGrams") { value(0.5) }
-                jsonPath("$.finalMix.flourGrams") { value(417.0) }
-                jsonPath("$.finalMix.waterGrams") { value(208.5) }
+                jsonPath("$.preferment.yeastGrams") { value(0.2) }
+                jsonPath("$.finalMix.flourGrams") { value(417.1) }
+                jsonPath("$.finalMix.waterGrams") { value(208.6) }
                 jsonPath("$.finalMix.saltGrams") { value(16.7) }
                 jsonPath("$.finalMix.yeastGrams") { value(0.0) }
             }
@@ -131,10 +131,10 @@ class DoughControllerTest(
         }
             .andExpect {
                 status { isOk() }
-                jsonPath("$.flourGrams") { value(595.7) }
-                jsonPath("$.waterGrams") { value(387.2) }
+                jsonPath("$.flourGrams") { value(595.9) }
+                jsonPath("$.waterGrams") { value(387.3) }
                 jsonPath("$.saltGrams") { value(16.7) }
-                jsonPath("$.yeastGrams") { value(0.4) }
+                jsonPath("$.yeastGrams") { value(0.2) }
             }
     }
 
@@ -157,10 +157,10 @@ class DoughControllerTest(
         }
             .andExpect {
                 status { isOk() }
-                jsonPath("$.flourGrams") { value(594.2) }
-                jsonPath("$.waterGrams") { value(386.2) }
-                jsonPath("$.saltGrams") { value(16.6) }
-                jsonPath("$.yeastGrams") { value(3.0) }
+                jsonPath("$.flourGrams") { value(595.7) }
+                jsonPath("$.waterGrams") { value(387.2) }
+                jsonPath("$.saltGrams") { value(16.7) }
+                jsonPath("$.yeastGrams") { value(0.4) }
             }
     }
 
@@ -185,11 +185,11 @@ class DoughControllerTest(
         }
             .andExpect {
                 status { isOk() }
-                jsonPath("$.preferment.flourGrams") { value(178.7) }
-                jsonPath("$.preferment.waterGrams") { value(178.7) }
-                jsonPath("$.preferment.yeastGrams") { value(0.3) }
+                jsonPath("$.preferment.flourGrams") { value(178.8) }
+                jsonPath("$.preferment.waterGrams") { value(178.8) }
+                jsonPath("$.preferment.yeastGrams") { value(0.1) }
                 jsonPath("$.finalMix.flourGrams") { value(417.1) }
-                jsonPath("$.finalMix.waterGrams") { value(208.6) }
+                jsonPath("$.finalMix.waterGrams") { value(208.5) }
                 jsonPath("$.finalMix.yeastGrams") { value(0.0) }
             }
     }

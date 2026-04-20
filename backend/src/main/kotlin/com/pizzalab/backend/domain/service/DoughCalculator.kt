@@ -15,6 +15,7 @@ class DoughCalculator(
             schedule = formula.fermentationSchedule,
             yeastType = formula.yeastType,
             doughMethod = formula.doughMethod,
+            hydrationPercent = formula.hydrationPercent,
         )
 
         val totalBakerPercent = 100.0 +
