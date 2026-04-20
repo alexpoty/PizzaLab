@@ -14,4 +14,6 @@ data class YeastCalculationDetails(
     val selectedYeastPercent: Double,
     val freshYeastEquivalentGrams: Double,
     val selectedYeastGrams: Double,
+    val prefermentYeastGrams: Double,
+    val finalMixYeastGrams: Double,
 )

@@ -160,5 +160,7 @@ class DoughController(
             selectedYeastPercent = selectedYeastPercent,
             freshYeastEquivalentGrams = freshYeastEquivalentGrams,
             selectedYeastGrams = selectedYeastGrams,
+            prefermentYeastGrams = prefermentYeastGrams,
+            finalMixYeastGrams = finalMixYeastGrams,
         )
 }

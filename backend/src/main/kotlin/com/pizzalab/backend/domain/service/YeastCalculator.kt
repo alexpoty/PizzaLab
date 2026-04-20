@@ -56,6 +56,8 @@ class YeastCalculator {
                 selectedYeastPercent = selectedYeastPercent,
                 freshYeastEquivalentGrams = freshYeastEquivalentGrams,
                 selectedYeastGrams = selectedYeastGrams,
+                prefermentYeastGrams = 0.0,
+                finalMixYeastGrams = selectedYeastGrams,
             ),
         )
     }

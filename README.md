@@ -70,6 +70,7 @@ Manual fermentation schedules are also supported:
 ```
 
 For `POOLISH` and `BIGA`, the response includes both `preferment` and `finalMix` blocks.
+When a preferment method includes cold fermentation, yeast is split between the preferment and final mix; top-level `yeastGrams` is the total yeast amount.
 The response also includes `yeastCalculation` details for explaining the selected yeast amount.
 
 Example yeast calculation block:

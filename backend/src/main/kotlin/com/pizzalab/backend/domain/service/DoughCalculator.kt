@@ -4,7 +4,10 @@ import com.pizzalab.backend.domain.model.DoughMethod
 import com.pizzalab.backend.domain.model.DoughFormula
 import com.pizzalab.backend.domain.model.DoughIngredients
 import com.pizzalab.backend.domain.model.FinalMixBreakdown
+import com.pizzalab.backend.domain.model.FermentationMode
+import com.pizzalab.backend.domain.model.FermentationSchedule
 import com.pizzalab.backend.domain.model.PrefermentBreakdown
+import com.pizzalab.backend.domain.model.YeastCalculation
 import com.pizzalab.backend.domain.model.YeastCalculationDetails
 import kotlin.math.round
 
@@ -13,11 +16,8 @@ class DoughCalculator(
 ) {
     fun calculate(formula: DoughFormula): DoughIngredients {
         val estimatedFlourGrams = estimateFlourWithoutYeast(formula)
-        val yeastCalculation = yeastCalculator.calculateYeastPercent(
-            schedule = formula.fermentationSchedule,
-            yeastType = formula.yeastType,
-            doughMethod = formula.doughMethod,
-            hydrationPercent = formula.hydrationPercent,
+        val yeastCalculation = calculateYeast(
+            formula = formula,
             flourGrams = estimatedFlourGrams,
         )
         val yeastPercent = yeastCalculation.selectedYeastPercent
@@ -28,22 +28,23 @@ class DoughCalculator(
             yeastPercent
 
         val finalFlourGrams = formula.totalDoughWeightGrams / (totalBakerPercent / 100.0)
-        val finalYeastCalculation = yeastCalculator.calculateYeastPercent(
-            schedule = formula.fermentationSchedule,
-            yeastType = formula.yeastType,
-            doughMethod = formula.doughMethod,
-            hydrationPercent = formula.hydrationPercent,
+        val finalYeastCalculation = calculateYeast(
+            formula = formula,
             flourGrams = finalFlourGrams,
         )
         val waterGrams = finalFlourGrams * formula.hydrationPercent / 100.0
         val saltGrams = finalFlourGrams * formula.saltPercent / 100.0
-        val yeastGrams = finalFlourGrams * yeastPercent / 100.0
-        val preferment = calculatePreferment(formula, finalFlourGrams, yeastGrams)
+        val yeastGrams = finalYeastCalculation.details.selectedYeastGrams
+        val preferment = calculatePreferment(
+            formula = formula,
+            flourGrams = finalFlourGrams,
+            yeastGrams = finalYeastCalculation.details.prefermentYeastGrams,
+        )
         val finalMix = calculateFinalMix(
             flourGrams = finalFlourGrams,
             waterGrams = waterGrams,
             saltGrams = saltGrams,
-            yeastGrams = yeastGrams,
+            yeastGrams = finalYeastCalculation.details.finalMixYeastGrams,
             preferment = preferment,
         )
 
@@ -58,6 +59,80 @@ class DoughCalculator(
             yeastCalculation = finalYeastCalculation.details.rounded(),
         )
     }
+
+    private fun calculateYeast(formula: DoughFormula, flourGrams: Double): YeastCalculation {
+        if (formula.doughMethod == DoughMethod.DIRECT) {
+            return yeastCalculator.calculateYeastPercent(
+                schedule = formula.fermentationSchedule,
+                yeastType = formula.yeastType,
+                doughMethod = formula.doughMethod,
+                hydrationPercent = formula.hydrationPercent,
+                flourGrams = flourGrams,
+            )
+        }
+
+        val prefermentCalculation = yeastCalculator.calculateYeastPercent(
+            schedule = formula.fermentationSchedule.prefermentSchedule(),
+            yeastType = formula.yeastType,
+            doughMethod = formula.doughMethod,
+            hydrationPercent = formula.hydrationPercent,
+            flourGrams = flourGrams,
+        )
+
+        if (formula.fermentationSchedule.coldHours <= 0.0) {
+            return prefermentCalculation.copy(
+                details = prefermentCalculation.details.copy(
+                    prefermentYeastGrams = prefermentCalculation.details.selectedYeastGrams,
+                    finalMixYeastGrams = 0.0,
+                ),
+            )
+        }
+
+        val finalMixCalculation = yeastCalculator.calculateYeastPercent(
+            schedule = formula.fermentationSchedule.finalMixColdSchedule(),
+            yeastType = formula.yeastType,
+            doughMethod = DoughMethod.DIRECT,
+            hydrationPercent = formula.hydrationPercent,
+            flourGrams = flourGrams,
+        )
+        val selectedYeastPercent = prefermentCalculation.selectedYeastPercent + finalMixCalculation.selectedYeastPercent
+        val selectedYeastGrams = prefermentCalculation.details.selectedYeastGrams +
+            finalMixCalculation.details.selectedYeastGrams
+        val freshYeastEquivalentGrams = prefermentCalculation.details.freshYeastEquivalentGrams +
+            finalMixCalculation.details.freshYeastEquivalentGrams
+
+        return YeastCalculation(
+            selectedYeastPercent = selectedYeastPercent,
+            details = prefermentCalculation.details.copy(
+                coldEffectHours = finalMixCalculation.details.coldEffectHours,
+                effectiveFermentationHours = prefermentCalculation.details.effectiveFermentationHours +
+                    finalMixCalculation.details.effectiveFermentationHours,
+                selectedYeastPercent = selectedYeastPercent,
+                freshYeastEquivalentGrams = freshYeastEquivalentGrams,
+                selectedYeastGrams = selectedYeastGrams,
+                prefermentYeastGrams = prefermentCalculation.details.selectedYeastGrams,
+                finalMixYeastGrams = finalMixCalculation.details.selectedYeastGrams,
+            ),
+        )
+    }
+
+    private fun FermentationSchedule.prefermentSchedule(): FermentationSchedule =
+        if (roomHours > 0.0) {
+            FermentationSchedule(
+                mode = FermentationMode.ROOM,
+                roomHours = roomHours,
+                roomTemperatureCelsius = roomTemperatureCelsius,
+            )
+        } else {
+            this
+        }
+
+    private fun FermentationSchedule.finalMixColdSchedule(): FermentationSchedule =
+        FermentationSchedule(
+            mode = FermentationMode.COLD,
+            coldHours = coldHours,
+            coldTemperatureCelsius = coldTemperatureCelsius,
+        )
 
     private fun estimateFlourWithoutYeast(formula: DoughFormula): Double {
         val totalBakerPercentWithoutYeast = 100.0 + formula.hydrationPercent + formula.saltPercent
@@ -77,6 +152,8 @@ class DoughCalculator(
             selectedYeastPercent = selectedYeastPercent.roundToPercent(),
             freshYeastEquivalentGrams = freshYeastEquivalentGrams.roundToGrams(),
             selectedYeastGrams = selectedYeastGrams.roundToGrams(),
+            prefermentYeastGrams = prefermentYeastGrams.roundToGrams(),
+            finalMixYeastGrams = finalMixYeastGrams.roundToGrams(),
         )
 
     private fun calculatePreferment(
@@ -132,7 +209,7 @@ class DoughCalculator(
             flourGrams = (flourGrams - preferment.flourGrams).roundToGrams(),
             waterGrams = (waterGrams - preferment.waterGrams).roundToGrams(),
             saltGrams = saltGrams.roundToGrams(),
-            yeastGrams = 0.0,
+            yeastGrams = yeastGrams.roundToGrams(),
         )
     }
 

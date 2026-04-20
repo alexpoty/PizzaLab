@@ -196,15 +196,18 @@ class DoughControllerTest(
         }
             .andExpect {
                 status { isOk() }
-                jsonPath("$.preferment.flourGrams") { value(178.8) }
-                jsonPath("$.preferment.waterGrams") { value(178.8) }
-                jsonPath("$.preferment.yeastGrams") { value(0.1) }
-                jsonPath("$.finalMix.flourGrams") { value(417.1) }
-                jsonPath("$.finalMix.waterGrams") { value(208.5) }
-                jsonPath("$.finalMix.yeastGrams") { value(0.0) }
+                jsonPath("$.yeastGrams") { value(0.6) }
+                jsonPath("$.preferment.flourGrams") { value(178.7) }
+                jsonPath("$.preferment.waterGrams") { value(178.7) }
+                jsonPath("$.preferment.yeastGrams") { value(0.2) }
+                jsonPath("$.finalMix.flourGrams") { value(416.9) }
+                jsonPath("$.finalMix.waterGrams") { value(208.4) }
+                jsonPath("$.finalMix.yeastGrams") { value(0.4) }
                 jsonPath("$.yeastCalculation.roomEffectHours") { value(11.3) }
                 jsonPath("$.yeastCalculation.coldEffectHours") { value(5.8) }
                 jsonPath("$.yeastCalculation.effectiveFermentationHours") { value(17.1) }
+                jsonPath("$.yeastCalculation.prefermentYeastGrams") { value(0.2) }
+                jsonPath("$.yeastCalculation.finalMixYeastGrams") { value(0.4) }
             }
     }
 
