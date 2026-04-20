@@ -41,6 +41,11 @@ class DoughCalculatorTest {
         assertEquals(387.2, result.finalMix.waterGrams)
         assertEquals(16.7, result.finalMix.saltGrams)
         assertEquals(0.4, result.finalMix.yeastGrams)
+        assertEquals(YeastType.INSTANT, result.yeastCalculation.yeastType)
+        assertEquals(DoughMethod.DIRECT, result.yeastCalculation.doughMethod)
+        assertEquals(5.7, result.yeastCalculation.effectiveFermentationHours)
+        assertEquals(0.4, result.yeastCalculation.selectedYeastGrams)
+        assertEquals(1.2, result.yeastCalculation.freshYeastEquivalentGrams)
     }
 
     @Test
@@ -64,6 +69,8 @@ class DoughCalculatorTest {
         )
 
         assertEquals(0.2, result.yeastGrams)
+        assertEquals(7.2, result.yeastCalculation.effectiveFermentationHours)
+        assertEquals(0.2, result.yeastCalculation.selectedYeastGrams)
     }
 
     @Test
@@ -93,6 +100,8 @@ class DoughCalculatorTest {
         assertEquals(208.6, result.finalMix.waterGrams)
         assertEquals(16.7, result.finalMix.saltGrams)
         assertEquals(0.0, result.finalMix.yeastGrams)
+        assertEquals(DoughMethod.POOLISH, result.yeastCalculation.doughMethod)
+        assertEquals(0.75, result.yeastCalculation.methodFactor)
     }
 
     @Test

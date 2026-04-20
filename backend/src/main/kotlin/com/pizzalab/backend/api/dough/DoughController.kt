@@ -9,6 +9,7 @@ import com.pizzalab.backend.domain.model.FermentationMode
 import com.pizzalab.backend.domain.model.FermentationPreset
 import com.pizzalab.backend.domain.model.FermentationSchedule
 import com.pizzalab.backend.domain.model.PrefermentBreakdown
+import com.pizzalab.backend.domain.model.YeastCalculationDetails
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -126,6 +127,7 @@ class DoughController(
             totalDoughWeightGrams = totalDoughWeightGrams,
             preferment = preferment?.toResponse(),
             finalMix = finalMix.toResponse(),
+            yeastCalculation = yeastCalculation.toResponse(),
         )
 
     private fun PrefermentBreakdown.toResponse(): PrefermentResponse =
@@ -141,5 +143,22 @@ class DoughController(
             waterGrams = waterGrams,
             saltGrams = saltGrams,
             yeastGrams = yeastGrams,
+        )
+
+    private fun YeastCalculationDetails.toResponse(): YeastCalculationResponse =
+        YeastCalculationResponse(
+            yeastType = yeastType,
+            doughMethod = doughMethod,
+            roomEffectHours = roomEffectHours,
+            coldEffectHours = coldEffectHours,
+            effectiveFermentationHours = effectiveFermentationHours,
+            methodFactor = methodFactor,
+            minFreshYeastPercent = minFreshYeastPercent,
+            maxFreshYeastPercent = maxFreshYeastPercent,
+            freshYeastPercentBeforeMethodFactor = freshYeastPercentBeforeMethodFactor,
+            freshYeastPercent = freshYeastPercent,
+            selectedYeastPercent = selectedYeastPercent,
+            freshYeastEquivalentGrams = freshYeastEquivalentGrams,
+            selectedYeastGrams = selectedYeastGrams,
         )
 }

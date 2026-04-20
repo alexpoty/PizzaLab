@@ -5,31 +5,42 @@ import com.pizzalab.backend.domain.model.DoughFormula
 import com.pizzalab.backend.domain.model.DoughIngredients
 import com.pizzalab.backend.domain.model.FinalMixBreakdown
 import com.pizzalab.backend.domain.model.PrefermentBreakdown
+import com.pizzalab.backend.domain.model.YeastCalculationDetails
 import kotlin.math.round
 
 class DoughCalculator(
     private val yeastCalculator: YeastCalculator = YeastCalculator(),
 ) {
     fun calculate(formula: DoughFormula): DoughIngredients {
-        val yeastPercent = yeastCalculator.calculateYeastPercent(
+        val estimatedFlourGrams = estimateFlourWithoutYeast(formula)
+        val yeastCalculation = yeastCalculator.calculateYeastPercent(
             schedule = formula.fermentationSchedule,
             yeastType = formula.yeastType,
             doughMethod = formula.doughMethod,
             hydrationPercent = formula.hydrationPercent,
+            flourGrams = estimatedFlourGrams,
         )
+        val yeastPercent = yeastCalculation.selectedYeastPercent
 
         val totalBakerPercent = 100.0 +
             formula.hydrationPercent +
             formula.saltPercent +
             yeastPercent
 
-        val flourGrams = formula.totalDoughWeightGrams / (totalBakerPercent / 100.0)
-        val waterGrams = flourGrams * formula.hydrationPercent / 100.0
-        val saltGrams = flourGrams * formula.saltPercent / 100.0
-        val yeastGrams = flourGrams * yeastPercent / 100.0
-        val preferment = calculatePreferment(formula, flourGrams, yeastGrams)
+        val finalFlourGrams = formula.totalDoughWeightGrams / (totalBakerPercent / 100.0)
+        val finalYeastCalculation = yeastCalculator.calculateYeastPercent(
+            schedule = formula.fermentationSchedule,
+            yeastType = formula.yeastType,
+            doughMethod = formula.doughMethod,
+            hydrationPercent = formula.hydrationPercent,
+            flourGrams = finalFlourGrams,
+        )
+        val waterGrams = finalFlourGrams * formula.hydrationPercent / 100.0
+        val saltGrams = finalFlourGrams * formula.saltPercent / 100.0
+        val yeastGrams = finalFlourGrams * yeastPercent / 100.0
+        val preferment = calculatePreferment(formula, finalFlourGrams, yeastGrams)
         val finalMix = calculateFinalMix(
-            flourGrams = flourGrams,
+            flourGrams = finalFlourGrams,
             waterGrams = waterGrams,
             saltGrams = saltGrams,
             yeastGrams = yeastGrams,
@@ -37,15 +48,36 @@ class DoughCalculator(
         )
 
         return DoughIngredients(
-            flourGrams = flourGrams.roundToGrams(),
+            flourGrams = finalFlourGrams.roundToGrams(),
             waterGrams = waterGrams.roundToGrams(),
             saltGrams = saltGrams.roundToGrams(),
             yeastGrams = yeastGrams.roundToGrams(),
             totalDoughWeightGrams = formula.totalDoughWeightGrams.roundToGrams(),
             preferment = preferment,
             finalMix = finalMix,
+            yeastCalculation = finalYeastCalculation.details.rounded(),
         )
     }
+
+    private fun estimateFlourWithoutYeast(formula: DoughFormula): Double {
+        val totalBakerPercentWithoutYeast = 100.0 + formula.hydrationPercent + formula.saltPercent
+        return formula.totalDoughWeightGrams / (totalBakerPercentWithoutYeast / 100.0)
+    }
+
+    private fun YeastCalculationDetails.rounded(): YeastCalculationDetails =
+        copy(
+            roomEffectHours = roomEffectHours.roundToGrams(),
+            coldEffectHours = coldEffectHours.roundToGrams(),
+            effectiveFermentationHours = effectiveFermentationHours.roundToGrams(),
+            methodFactor = methodFactor.roundToPercent(),
+            minFreshYeastPercent = minFreshYeastPercent.roundToPercent(),
+            maxFreshYeastPercent = maxFreshYeastPercent.roundToPercent(),
+            freshYeastPercentBeforeMethodFactor = freshYeastPercentBeforeMethodFactor.roundToPercent(),
+            freshYeastPercent = freshYeastPercent.roundToPercent(),
+            selectedYeastPercent = selectedYeastPercent.roundToPercent(),
+            freshYeastEquivalentGrams = freshYeastEquivalentGrams.roundToGrams(),
+            selectedYeastGrams = selectedYeastGrams.roundToGrams(),
+        )
 
     private fun calculatePreferment(
         formula: DoughFormula,
@@ -105,4 +137,6 @@ class DoughCalculator(
     }
 
     private fun Double.roundToGrams(): Double = round(this * 10.0) / 10.0
+
+    private fun Double.roundToPercent(): Double = round(this * 10_000.0) / 10_000.0
 }

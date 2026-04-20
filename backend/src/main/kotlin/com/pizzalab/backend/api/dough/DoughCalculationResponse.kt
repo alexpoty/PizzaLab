@@ -8,4 +8,5 @@ data class DoughCalculationResponse(
     val totalDoughWeightGrams: Double,
     val preferment: PrefermentResponse?,
     val finalMix: FinalMixResponse,
+    val yeastCalculation: YeastCalculationResponse,
 )
