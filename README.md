@@ -16,6 +16,14 @@ Planned first endpoint:
 POST /api/dough/calculate
 ```
 
+Metadata endpoint:
+
+```http
+GET /api/dough/metadata
+```
+
+It returns available dough methods, yeast types, and fermentation presets with compatible methods and required temperatures.
+
 Example request:
 
 ```json
