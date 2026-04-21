@@ -1,4 +1,4 @@
-package com.pizzalab.backend.domain.model
+package com.pizzalab.backend.domain.model.yeast
 
 enum class YeastType(val freshYeastRatio: Double) {
     INSTANT(3.0),

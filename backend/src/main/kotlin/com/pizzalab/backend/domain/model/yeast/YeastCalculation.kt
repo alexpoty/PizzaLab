@@ -1,4 +1,4 @@
-package com.pizzalab.backend.domain.model
+package com.pizzalab.backend.domain.model.yeast
 
 data class YeastCalculation(
     val selectedYeastPercent: Double,

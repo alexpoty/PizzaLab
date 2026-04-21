@@ -1,6 +1,6 @@
-package com.pizzalab.backend.api.dough
+package com.pizzalab.backend.domain.model.dough
 
-data class FinalMixResponse(
+data class FinalMixBreakdown(
     val flourGrams: Double,
     val waterGrams: Double,
     val saltGrams: Double,

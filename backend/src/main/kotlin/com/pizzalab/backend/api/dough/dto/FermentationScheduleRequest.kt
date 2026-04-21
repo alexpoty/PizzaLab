@@ -1,6 +1,6 @@
-package com.pizzalab.backend.api.dough
+package com.pizzalab.backend.api.dough.dto
 
-import com.pizzalab.backend.domain.model.FermentationMode
+import com.pizzalab.backend.domain.model.fermentation.FermentationMode
 import jakarta.validation.constraints.DecimalMin
 
 data class FermentationScheduleRequest(

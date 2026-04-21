@@ -1,6 +1,6 @@
-package com.pizzalab.backend.domain.model
+package com.pizzalab.backend.api.dough.dto
 
-data class PrefermentBreakdown(
+data class PrefermentResponse(
     val flourGrams: Double,
     val waterGrams: Double,
     val yeastGrams: Double,

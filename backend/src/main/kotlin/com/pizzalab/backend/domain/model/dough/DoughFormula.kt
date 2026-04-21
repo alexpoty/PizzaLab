@@ -1,4 +1,7 @@
-package com.pizzalab.backend.domain.model
+package com.pizzalab.backend.domain.model.dough
+
+import com.pizzalab.backend.domain.model.fermentation.FermentationSchedule
+import com.pizzalab.backend.domain.model.yeast.YeastType
 
 data class DoughFormula(
     val pizzaCount: Int,

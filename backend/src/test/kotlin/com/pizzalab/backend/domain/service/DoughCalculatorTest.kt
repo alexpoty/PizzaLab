@@ -1,10 +1,10 @@
 package com.pizzalab.backend.domain.service
 
-import com.pizzalab.backend.domain.model.DoughFormula
-import com.pizzalab.backend.domain.model.DoughMethod
-import com.pizzalab.backend.domain.model.FermentationMode
-import com.pizzalab.backend.domain.model.FermentationSchedule
-import com.pizzalab.backend.domain.model.YeastType
+import com.pizzalab.backend.domain.model.dough.DoughFormula
+import com.pizzalab.backend.domain.model.dough.DoughMethod
+import com.pizzalab.backend.domain.model.fermentation.FermentationMode
+import com.pizzalab.backend.domain.model.fermentation.FermentationSchedule
+import com.pizzalab.backend.domain.model.yeast.YeastType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull

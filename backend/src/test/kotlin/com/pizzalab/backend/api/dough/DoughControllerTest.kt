@@ -8,11 +8,12 @@ import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
-import com.pizzalab.backend.api.ApiExceptionHandler
+import com.pizzalab.backend.api.common.ApiExceptionHandler
 import com.pizzalab.backend.application.CalculateDoughUseCase
+import com.pizzalab.backend.config.DomainServiceConfig
 
 @WebMvcTest(DoughController::class)
-@Import(CalculateDoughUseCase::class, ApiExceptionHandler::class)
+@Import(CalculateDoughUseCase::class, DomainServiceConfig::class, ApiExceptionHandler::class)
 class DoughControllerTest(
     @param:Autowired private val mockMvc: MockMvc,
 ) {

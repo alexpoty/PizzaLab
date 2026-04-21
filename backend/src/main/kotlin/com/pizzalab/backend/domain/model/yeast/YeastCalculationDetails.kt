@@ -1,4 +1,6 @@
-package com.pizzalab.backend.domain.model
+package com.pizzalab.backend.domain.model.yeast
+
+import com.pizzalab.backend.domain.model.dough.DoughMethod
 
 data class YeastCalculationDetails(
     val yeastType: YeastType,
