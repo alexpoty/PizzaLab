@@ -1,8 +1,11 @@
 package com.pizzalab.backend.api.dough
 
-import com.pizzalab.backend.domain.model.DoughMethod
-import com.pizzalab.backend.domain.model.FermentationPreset
-import com.pizzalab.backend.domain.model.YeastType
+import com.pizzalab.backend.api.dough.dto.DoughMetadataResponse
+import com.pizzalab.backend.api.dough.dto.FermentationPresetResponse
+import com.pizzalab.backend.domain.model.dough.DoughMethod
+import com.pizzalab.backend.domain.model.fermentation.FermentationPreset
+import com.pizzalab.backend.domain.model.fermentation.definition
+import com.pizzalab.backend.domain.model.yeast.YeastType
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -10,6 +13,9 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/dough")
 class DoughMetadataController {
+    /**
+     * Returns enum values and preset requirements needed to render the calculator form.
+     */
     @GetMapping("/metadata")
     fun metadata(): DoughMetadataResponse =
         DoughMetadataResponse(
@@ -18,61 +24,31 @@ class DoughMetadataController {
             fermentationPresets = FermentationPreset.entries.map { it.toResponse() },
         )
 
+    /**
+     * Converts a domain preset definition into the API metadata contract.
+     */
     private fun FermentationPreset.toResponse(): FermentationPresetResponse =
-        when (this) {
-            FermentationPreset.ROOM_24H ->
-                FermentationPresetResponse(
-                    code = this,
-                    label = "24h room fermentation",
-                    compatibleDoughMethods = DoughMethod.entries.toList(),
-                    requiresRoomTemperature = true,
-                    requiresColdTemperature = false,
-                    roomHours = 24.0,
-                    coldHours = 0.0,
-                )
+        definition().let { definition ->
+            FermentationPresetResponse(
+                code = this,
+                label = label,
+                compatibleDoughMethods = definition.compatibleDoughMethods,
+                requiresRoomTemperature = definition.requiresRoomTemperature,
+                requiresColdTemperature = definition.requiresColdTemperature,
+                roomHours = definition.roomHours,
+                coldHours = definition.coldHours,
+            )
+        }
 
-            FermentationPreset.COLD_24H ->
-                FermentationPresetResponse(
-                    code = this,
-                    label = "24h cold fermentation",
-                    compatibleDoughMethods = listOf(DoughMethod.DIRECT),
-                    requiresRoomTemperature = false,
-                    requiresColdTemperature = true,
-                    roomHours = 0.0,
-                    coldHours = 24.0,
-                )
-
-            FermentationPreset.COLD_48H ->
-                FermentationPresetResponse(
-                    code = this,
-                    label = "48h cold fermentation",
-                    compatibleDoughMethods = listOf(DoughMethod.DIRECT),
-                    requiresRoomTemperature = false,
-                    requiresColdTemperature = true,
-                    roomHours = 0.0,
-                    coldHours = 48.0,
-                )
-
-            FermentationPreset.POOLISH_ROOM_16H_COLD_24H ->
-                FermentationPresetResponse(
-                    code = this,
-                    label = "Poolish 16h room + 24h cold",
-                    compatibleDoughMethods = listOf(DoughMethod.POOLISH),
-                    requiresRoomTemperature = true,
-                    requiresColdTemperature = true,
-                    roomHours = 16.0,
-                    coldHours = 24.0,
-                )
-
-            FermentationPreset.BIGA_ROOM_16H_COLD_24H ->
-                FermentationPresetResponse(
-                    code = this,
-                    label = "Biga 16h room + 24h cold",
-                    compatibleDoughMethods = listOf(DoughMethod.BIGA),
-                    requiresRoomTemperature = true,
-                    requiresColdTemperature = true,
-                    roomHours = 16.0,
-                    coldHours = 24.0,
-                )
+    /**
+     * Keeps user-facing preset labels out of the domain model.
+     */
+    private val FermentationPreset.label: String
+        get() = when (this) {
+            FermentationPreset.ROOM_24H -> "24h room fermentation"
+            FermentationPreset.COLD_24H -> "24h cold fermentation"
+            FermentationPreset.COLD_48H -> "48h cold fermentation"
+            FermentationPreset.POOLISH_ROOM_16H_COLD_24H -> "Poolish 16h room + 24h cold"
+            FermentationPreset.BIGA_ROOM_16H_COLD_24H -> "Biga 16h room + 24h cold"
         }
 }

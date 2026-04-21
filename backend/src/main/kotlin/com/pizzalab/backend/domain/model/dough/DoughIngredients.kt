@@ -1,4 +1,6 @@
-package com.pizzalab.backend.domain.model
+package com.pizzalab.backend.domain.model.dough
+
+import com.pizzalab.backend.domain.model.yeast.YeastCalculationDetails
 
 data class DoughIngredients(
     val flourGrams: Double,

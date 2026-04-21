@@ -1,4 +1,4 @@
-package com.pizzalab.backend.api.dough
+package com.pizzalab.backend.api.dough.dto
 
 data class DoughCalculationResponse(
     val flourGrams: Double,

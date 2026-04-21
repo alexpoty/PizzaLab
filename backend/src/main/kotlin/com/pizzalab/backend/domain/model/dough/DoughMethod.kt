@@ -1,4 +1,4 @@
-package com.pizzalab.backend.domain.model
+package com.pizzalab.backend.domain.model.dough
 
 enum class DoughMethod {
     DIRECT,

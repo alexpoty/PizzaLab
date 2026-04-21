@@ -1,4 +1,4 @@
-package com.pizzalab.backend.domain.model
+package com.pizzalab.backend.domain.model.fermentation
 
 enum class FermentationMode {
     ROOM,

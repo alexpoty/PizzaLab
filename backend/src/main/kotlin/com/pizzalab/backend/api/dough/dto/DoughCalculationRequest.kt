@@ -1,8 +1,8 @@
-package com.pizzalab.backend.api.dough
+package com.pizzalab.backend.api.dough.dto
 
-import com.pizzalab.backend.domain.model.DoughMethod
-import com.pizzalab.backend.domain.model.FermentationPreset
-import com.pizzalab.backend.domain.model.YeastType
+import com.pizzalab.backend.domain.model.dough.DoughMethod
+import com.pizzalab.backend.domain.model.fermentation.FermentationPreset
+import com.pizzalab.backend.domain.model.yeast.YeastType
 import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.Min
 import jakarta.validation.Valid
