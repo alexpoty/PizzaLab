@@ -10,12 +10,6 @@ Stack:
 - Spring Boot
 - Gradle Kotlin DSL
 
-Publish backend package to GitHub Packages:
-
-- package coordinates: `com.pizzalab:backend:<version>`
-- publishing runs automatically for pull requests targeting `main`
-- pull request package versions use the format `0.1.0-pr-<number>-SNAPSHOT`
-
 ## Frontend
 
 Stack:
@@ -31,6 +25,19 @@ cd frontend
 npm install
 npm run dev
 ```
+
+Run with Docker:
+
+```bash
+docker compose up --build
+```
+
+The app runs at `http://localhost:3000`, and the backend API is also exposed at `http://localhost:8080`.
+
+Pull requests targeting `main` publish Docker images to GitHub Container Registry:
+
+- `ghcr.io/alexpoty/pizzalab/backend:pr-<number>`
+- `ghcr.io/alexpoty/pizzalab/frontend:pr-<number>`
 
 Planned first endpoint:
 
