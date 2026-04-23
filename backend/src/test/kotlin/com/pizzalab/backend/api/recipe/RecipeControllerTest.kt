@@ -231,4 +231,34 @@ class RecipeControllerTest(
                 jsonPath("$", hasSize<Any>(0))
             }
     }
+
+    @Test
+    fun `persists large numeric formula values accepted by api validation`() {
+        mockMvc.post("/api/recipes") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "name": "Large formula values",
+                  "formula": {
+                    "pizzaCount": 100000,
+                    "doughBallWeightGrams": 1000000000,
+                    "hydrationPercent": 12345.67,
+                    "saltPercent": 123.45,
+                    "yeastType": "INSTANT",
+                    "doughMethod": "DIRECT",
+                    "fermentationPreset": "ROOM_24H",
+                    "roomTemperatureCelsius": 123.45
+                  }
+                }
+            """.trimIndent()
+        }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.formula.pizzaCount") { value(100000) }
+                jsonPath("$.formula.doughBallWeightGrams") { value(1000000000.0) }
+                jsonPath("$.formula.hydrationPercent") { value(12345.67) }
+                jsonPath("$.formula.saltPercent") { value(123.45) }
+                jsonPath("$.formula.roomTemperatureCelsius") { value(123.45) }
+            }
+    }
 }
