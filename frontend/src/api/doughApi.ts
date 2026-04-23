@@ -37,6 +37,23 @@ export function buildCalculationRequest(
   form: FormState,
   selectedPreset: PresetMetadata | undefined,
 ): DoughCalculationRequest {
+  if (form.fermentationSchedule) {
+    return {
+      pizzaCount: form.pizzaCount,
+      doughBallWeightGrams: form.doughBallWeightGrams,
+      hydrationPercent: form.hydrationPercent,
+      saltPercent: form.saltPercent,
+      yeastType: form.yeastType,
+      doughMethod: form.doughMethod,
+      fermentationPreset: null,
+      fermentationSchedule: form.fermentationSchedule,
+      roomTemperatureCelsius: undefined,
+      coldTemperatureCelsius: undefined,
+      prefermentFlourPercent:
+        form.doughMethod === 'DIRECT' ? undefined : form.prefermentFlourPercent,
+    }
+  }
+
   return {
     pizzaCount: form.pizzaCount,
     doughBallWeightGrams: form.doughBallWeightGrams,
@@ -45,6 +62,7 @@ export function buildCalculationRequest(
     yeastType: form.yeastType,
     doughMethod: form.doughMethod,
     fermentationPreset: selectedPreset?.code ?? form.fermentationPreset,
+    fermentationSchedule: null,
     roomTemperatureCelsius: selectedPreset?.requiresRoomTemperature
       ? form.roomTemperatureCelsius
       : undefined,

@@ -23,9 +23,10 @@ export function useDoughCalculator() {
       ),
     [form.doughMethod, metadata.fermentationPresets],
   )
-  const selectedPreset =
-    compatiblePresets.find((preset) => preset.code === form.fermentationPreset) ??
-    compatiblePresets[0]
+  const selectedPreset = form.fermentationSchedule
+    ? undefined
+    : compatiblePresets.find((preset) => preset.code === form.fermentationPreset) ??
+      compatiblePresets[0]
 
   const calculate = async () => {
     setIsLoading(true)

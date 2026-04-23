@@ -53,6 +53,7 @@ export function DoughForm({
                   metadata.fermentationPresets.find((preset) =>
                     preset.compatibleDoughMethods.includes(method),
                   )?.code ?? current.fermentationPreset,
+                fermentationSchedule: null,
                 prefermentFlourPercent: method === 'BIGA' ? 45 : 30,
               }))
             }
@@ -114,14 +115,16 @@ export function DoughForm({
       <label className="select-field">
         <span>Preset</span>
         <select
-          value={selectedPreset?.code ?? form.fermentationPreset}
+          value={form.fermentationSchedule ? 'MANUAL' : selectedPreset?.code ?? form.fermentationPreset ?? ''}
           onChange={(event) =>
             setForm((current) => ({
               ...current,
               fermentationPreset: event.target.value as FermentationPreset,
+              fermentationSchedule: null,
             }))
           }
         >
+          {form.fermentationSchedule && <option value="MANUAL">Manual schedule</option>}
           {compatiblePresets.map((preset) => (
             <option key={preset.code} value={preset.code}>
               {preset.label}

@@ -28,7 +28,10 @@ function App() {
       saltPercent: formula.saltPercent,
       yeastType: formula.yeastType,
       doughMethod: formula.doughMethod,
-      fermentationPreset: formula.fermentationPreset ?? current.fermentationPreset,
+      fermentationPreset: formula.fermentationSchedule
+        ? null
+        : formula.fermentationPreset ?? current.fermentationPreset,
+      fermentationSchedule: formula.fermentationSchedule ?? null,
       roomTemperatureCelsius:
         formula.roomTemperatureCelsius ??
         formula.fermentationSchedule?.roomTemperatureCelsius ??
