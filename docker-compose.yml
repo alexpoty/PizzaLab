@@ -1,0 +1,18 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: pizzalab-backend:local
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    image: pizzalab-frontend:local
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"

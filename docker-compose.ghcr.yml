@@ -1,0 +1,12 @@
+services:
+  backend:
+    image: ghcr.io/alexpoty/pizzalab/backend:${IMAGE_TAG:?Set IMAGE_TAG, for example pr-27}
+    ports:
+      - "8080:8080"
+
+  frontend:
+    image: ghcr.io/alexpoty/pizzalab/frontend:${IMAGE_TAG:?Set IMAGE_TAG, for example pr-27}
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
