@@ -171,4 +171,32 @@ class RecipeControllerTest(
                 jsonPath("$.message") { exists() }
             }
     }
+
+    @Test
+    fun `returns validation error when recipe name exceeds database limit`() {
+        val recipeName = "a".repeat(121)
+
+        mockMvc.post("/api/recipes") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "name": "$recipeName",
+                  "formula": {
+                    "pizzaCount": 4,
+                    "doughBallWeightGrams": 250,
+                    "hydrationPercent": 65,
+                    "saltPercent": 2.8,
+                    "yeastType": "INSTANT",
+                    "doughMethod": "DIRECT",
+                    "fermentationPreset": "ROOM_24H",
+                    "roomTemperatureCelsius": 20
+                  }
+                }
+            """.trimIndent()
+        }
+            .andExpect {
+                status { isBadRequest() }
+                jsonPath("$.message") { exists() }
+            }
+    }
 }
