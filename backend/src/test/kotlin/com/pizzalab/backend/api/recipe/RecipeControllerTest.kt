@@ -199,4 +199,36 @@ class RecipeControllerTest(
                 jsonPath("$.message") { exists() }
             }
     }
+
+    @Test
+    fun `returns validation error when recipe formula has no fermentation source`() {
+        mockMvc.post("/api/recipes") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "name": "Missing fermentation",
+                  "formula": {
+                    "pizzaCount": 4,
+                    "doughBallWeightGrams": 250,
+                    "hydrationPercent": 65,
+                    "saltPercent": 2.8,
+                    "yeastType": "INSTANT",
+                    "doughMethod": "DIRECT"
+                  }
+                }
+            """.trimIndent()
+        }
+            .andExpect {
+                status { isBadRequest() }
+                jsonPath("$.message") {
+                    value("Either fermentationSchedule or fermentationPreset must be provided.")
+                }
+            }
+
+        mockMvc.get("/api/recipes")
+            .andExpect {
+                status { isOk() }
+                jsonPath("$", hasSize<Any>(0))
+            }
+    }
 }

@@ -1,5 +1,6 @@
 package com.pizzalab.backend.application
 
+import com.pizzalab.backend.api.dough.toFormula
 import com.pizzalab.backend.api.recipe.dto.CreateRecipeRequest
 import com.pizzalab.backend.api.recipe.dto.RecipeResponse
 import com.pizzalab.backend.persistence.recipe.RecipeJdbcRepository
@@ -16,6 +17,7 @@ class RecipeManagementUseCase(
      * Coordinates recipe persistence without exposing JDBC details to the HTTP layer.
      */
     fun create(request: CreateRecipeRequest): RecipeResponse {
+        request.formula.toFormula()
         return recipeRepository.save(request.toRecord()).toResponse()
     }
 
