@@ -34,6 +34,12 @@ docker compose up --build
 
 The app runs at `http://localhost:3000`, and the backend API is also exposed at `http://localhost:8080`.
 
+Run published images from GitHub Container Registry:
+
+```bash
+IMAGE_TAG=pr-27 docker compose -f docker-compose.ghcr.yml up
+```
+
 Pull requests targeting `main` publish Docker images to GitHub Container Registry:
 
 - `ghcr.io/alexpoty/pizzalab/backend:pr-<number>`
