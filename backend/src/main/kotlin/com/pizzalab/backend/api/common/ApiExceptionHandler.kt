@@ -1,6 +1,7 @@
 package com.pizzalab.backend.api.common
 
 import org.springframework.http.HttpStatus
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
@@ -26,5 +27,14 @@ class ApiExceptionHandler {
         val message = exception.bindingResult.fieldErrors.firstOrNull()?.defaultMessage
             ?: "Invalid request."
         return ApiErrorResponse(message)
+    }
+
+    /**
+     * Converts malformed JSON and enum parsing failures into HTTP 400 responses.
+     */
+    @ExceptionHandler(HttpMessageNotReadableException::class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    fun handleUnreadableMessage(exception: HttpMessageNotReadableException): ApiErrorResponse {
+        return ApiErrorResponse("Invalid request payload.")
     }
 }

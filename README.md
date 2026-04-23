@@ -34,6 +34,12 @@ docker compose up --build
 
 The app runs at `http://localhost:3000`, and the backend API is also exposed at `http://localhost:8080`.
 
+Run only the local development database:
+
+```bash
+docker compose -f docker-compose.dev.yml up -d
+```
+
 Run published images from GitHub Container Registry:
 
 ```bash

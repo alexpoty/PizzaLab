@@ -9,6 +9,14 @@ export type FermentationPreset =
   | 'POOLISH_ROOM_16H_COLD_24H'
   | 'BIGA_ROOM_16H_COLD_24H'
 
+export type FermentationSchedule = {
+  mode: 'ROOM' | 'COLD' | 'MIXED'
+  roomHours: number
+  roomTemperatureCelsius: number
+  coldHours: number
+  coldTemperatureCelsius: number
+}
+
 export type PresetMetadata = {
   code: FermentationPreset
   label: string
@@ -62,7 +70,8 @@ export type FormState = {
   saltPercent: number
   yeastType: YeastType
   doughMethod: DoughMethod
-  fermentationPreset: FermentationPreset
+  fermentationPreset: FermentationPreset | null
+  fermentationSchedule: FermentationSchedule | null
   roomTemperatureCelsius: number
   coldTemperatureCelsius: number
   prefermentFlourPercent: number
@@ -75,8 +84,9 @@ export type DoughCalculationRequest = {
   saltPercent: number
   yeastType: YeastType
   doughMethod: DoughMethod
-  fermentationPreset: FermentationPreset
+  fermentationPreset?: FermentationPreset | null
   roomTemperatureCelsius?: number
   coldTemperatureCelsius?: number
   prefermentFlourPercent?: number
+  fermentationSchedule?: FermentationSchedule | null
 }

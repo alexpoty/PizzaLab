@@ -60,6 +60,7 @@ export const defaultForm: FormState = {
   yeastType: 'INSTANT',
   doughMethod: 'DIRECT',
   fermentationPreset: 'COLD_24H',
+  fermentationSchedule: null,
   roomTemperatureCelsius: 20,
   coldTemperatureCelsius: 5,
   prefermentFlourPercent: 30,
