@@ -12,14 +12,23 @@ import java.util.UUID
 class RecipeManagementUseCase(
     private val recipeRepository: RecipeJdbcRepository,
 ) {
+    /**
+     * Coordinates recipe persistence without exposing JDBC details to the HTTP layer.
+     */
     fun create(request: CreateRecipeRequest): RecipeResponse {
         return recipeRepository.save(request.toRecord()).toResponse()
     }
 
+    /**
+     * Lists recipes in presentation order. The repository owns the database ordering detail.
+     */
     fun list(): List<RecipeResponse> {
         return recipeRepository.findAllByOrderByCreatedAtDesc().map { it.toResponse() }
     }
 
+    /**
+     * Keeps delete semantics simple for clients: repeated deletes do not fail.
+     */
     fun delete(id: UUID) {
         recipeRepository.deleteById(id)
     }

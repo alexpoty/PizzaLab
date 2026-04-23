@@ -12,6 +12,9 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.UUID
 
+/**
+ * Converts API recipe input into the relational shape stored by Spring Data JDBC.
+ */
 fun CreateRecipeRequest.toRecord(): RecipeRecord {
     val formula = formula
 
@@ -37,6 +40,9 @@ fun CreateRecipeRequest.toRecord(): RecipeRecord {
     ).also { it.newRecord = true }
 }
 
+/**
+ * Converts stored rows back into the same formula contract used by the calculator API.
+ */
 fun RecipeRecord.toResponse(): RecipeResponse {
     return RecipeResponse(
         id = id,

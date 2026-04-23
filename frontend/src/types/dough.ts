@@ -79,4 +79,11 @@ export type DoughCalculationRequest = {
   roomTemperatureCelsius?: number
   coldTemperatureCelsius?: number
   prefermentFlourPercent?: number
+  fermentationSchedule?: {
+    mode: 'ROOM' | 'COLD' | 'MIXED'
+    roomHours: number
+    roomTemperatureCelsius: number
+    coldHours: number
+    coldTemperatureCelsius: number
+  } | null
 }

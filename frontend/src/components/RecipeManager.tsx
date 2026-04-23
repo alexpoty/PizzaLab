@@ -1,14 +1,24 @@
 import { useEffect, useState } from 'react'
+import { calculateDough } from '../api/doughApi'
 import { createRecipe, deleteRecipe, fetchRecipes } from '../api/recipeApi'
-import type { DoughCalculationRequest } from '../types/dough'
+import type { DoughCalculationRequest, DoughCalculationResponse } from '../types/dough'
 import type { Recipe } from '../types/recipe'
+import { RecipeDetailModal } from './RecipeDetailModal'
+import { RecipeListItem } from './RecipeListItem'
 
 type RecipeManagerProps = {
   formula: DoughCalculationRequest
+  onLoadRecipe: (formula: DoughCalculationRequest) => void
 }
 
-export function RecipeManager({ formula }: RecipeManagerProps) {
+type RecipePreview = {
+  recipe: Recipe
+  result: DoughCalculationResponse
+}
+
+export function RecipeManager({ formula, onLoadRecipe }: RecipeManagerProps) {
   const [recipes, setRecipes] = useState<Recipe[]>([])
+  const [preview, setPreview] = useState<RecipePreview | null>(null)
   const [recipeName, setRecipeName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -33,6 +43,8 @@ export function RecipeManager({ formula }: RecipeManagerProps) {
     }
   }, [])
 
+  // Recipes persist the formula input. Ingredient details are calculated on demand
+  // so the modal always uses the same calculator logic as the main results panel.
   const saveRecipe = async () => {
     const name = recipeName.trim()
 
@@ -47,6 +59,7 @@ export function RecipeManager({ formula }: RecipeManagerProps) {
     try {
       const savedRecipe = await createRecipe({ name, formula })
       setRecipes((currentRecipes) => [savedRecipe, ...currentRecipes])
+      await openRecipe(savedRecipe)
       setRecipeName('')
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Recipe save failed')
@@ -62,11 +75,31 @@ export function RecipeManager({ formula }: RecipeManagerProps) {
     try {
       await deleteRecipe(id)
       setRecipes((currentRecipes) => currentRecipes.filter((recipe) => recipe.id !== id))
+      setPreview((currentPreview) => (currentPreview?.recipe.id === id ? null : currentPreview))
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Recipe delete failed')
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const showRecipe = async (recipe: Recipe) => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const result = await calculateDough(recipe.formula)
+      setPreview({ recipe, result })
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Recipe calculation failed')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const openRecipe = async (recipe: Recipe) => {
+    onLoadRecipe(recipe.formula)
+    await showRecipe(recipe)
   }
 
   return (
@@ -100,26 +133,24 @@ export function RecipeManager({ formula }: RecipeManagerProps) {
           <p className="empty-recipes">No saved recipes yet.</p>
         ) : (
           recipes.map((recipe) => (
-            <article className="recipe-item" key={recipe.id}>
-              <div>
-                <h3>{recipe.name}</h3>
-                <p>
-                  {recipe.formula.doughMethod.toLowerCase()} · {recipe.formula.hydrationPercent}%
-                  hydration · {recipe.formula.saltPercent}% salt
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => removeRecipe(recipe.id)}
-                disabled={isLoading}
-                aria-label={`Delete ${recipe.name}`}
-              >
-                Delete
-              </button>
-            </article>
+            <RecipeListItem
+              key={recipe.id}
+              recipe={recipe}
+              isDisabled={isLoading}
+              onOpen={openRecipe}
+              onDelete={removeRecipe}
+            />
           ))
         )}
       </div>
+
+      {preview && (
+        <RecipeDetailModal
+          recipe={preview.recipe}
+          result={preview.result}
+          onClose={() => setPreview(null)}
+        />
+      )}
     </section>
   )
 }

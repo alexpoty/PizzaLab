@@ -66,6 +66,10 @@ data class RecipeRecord(
     @Column("created_at")
     val createdAt: OffsetDateTime,
 ) : Persistable<UUID> {
+    /**
+     * Spring Data JDBC treats non-null ids as existing rows. This flag lets us
+     * generate UUIDs in application code while still forcing INSERT for new recipes.
+     */
     @Transient
     var newRecord: Boolean = false
 

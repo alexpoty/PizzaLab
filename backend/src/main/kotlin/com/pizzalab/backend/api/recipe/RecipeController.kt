@@ -20,16 +20,25 @@ import java.util.UUID
 class RecipeController(
     private val recipeManagement: RecipeManagementUseCase,
 ) {
+    /**
+     * HTTP adapter for saving the current calculator input under a user-provided name.
+     */
     @PostMapping
     fun create(@Valid @RequestBody request: CreateRecipeRequest): RecipeResponse {
         return recipeManagement.create(request)
     }
 
+    /**
+     * Returns saved recipes newest-first so recent formulas stay easy to reuse.
+     */
     @GetMapping
     fun list(): List<RecipeResponse> {
         return recipeManagement.list()
     }
 
+    /**
+     * Deletes a recipe by id. Deleting an already-missing id is intentionally idempotent.
+     */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun delete(@PathVariable id: UUID) {
