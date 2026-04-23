@@ -10,6 +10,12 @@ Stack:
 - Spring Boot
 - Gradle Kotlin DSL
 
+Publish backend package to GitHub Packages:
+
+- package coordinates: `com.pizzalab:backend:<version>`
+- publishing runs automatically for pull requests targeting `main`
+- pull request package versions use the format `0.1.0-pr-<number>-SNAPSHOT`
+
 ## Frontend
 
 Stack:

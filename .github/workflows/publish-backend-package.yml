@@ -1,0 +1,43 @@
+name: Publish Backend Package
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    name: Publish Maven Package
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Resolve version
+        id: version
+        shell: bash
+        run: |
+          VERSION="0.1.0-pr-${{ github.event.pull_request.number }}-SNAPSHOT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Run backend tests
+        run: ./gradlew :backend:test
+
+      - name: Publish backend package
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew :backend:publish -PreleaseVersion=${{ steps.version.outputs.version }}
