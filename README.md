@@ -45,6 +45,19 @@ Pull requests targeting `main` publish Docker images to GitHub Container Registr
 - `ghcr.io/alexpoty/pizzalab/backend:pr-<number>`
 - `ghcr.io/alexpoty/pizzalab/frontend:pr-<number>`
 
+Release tags also publish versioned images. For example, pushing `v0.1.0` publishes:
+
+- `ghcr.io/alexpoty/pizzalab/backend:0.1.0`
+- `ghcr.io/alexpoty/pizzalab/backend:latest`
+- `ghcr.io/alexpoty/pizzalab/frontend:0.1.0`
+- `ghcr.io/alexpoty/pizzalab/frontend:latest`
+
+Run a release image:
+
+```bash
+IMAGE_TAG=0.1.0 docker compose -f docker-compose.ghcr.yml up
+```
+
 Planned first endpoint:
 
 ```http
