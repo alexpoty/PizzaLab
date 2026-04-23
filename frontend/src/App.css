@@ -71,6 +71,7 @@ h1 {
   grid-template-columns: minmax(320px, 430px) minmax(0, 1fr);
   gap: 18px;
   align-items: start;
+  margin-bottom: 18px;
 }
 
 .control-panel,
@@ -195,6 +196,122 @@ h1 {
   background: #fde8e3;
   color: #9b2c20;
   font-size: 14px;
+}
+
+.recipe-panel {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid rgba(31, 37, 32, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 20px 70px rgba(36, 41, 34, 0.12);
+}
+
+.recipe-header,
+.recipe-save-row,
+.recipe-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.recipe-header h2 {
+  color: #141714;
+  font-size: 28px;
+  line-height: 1.1;
+}
+
+.recipe-header span {
+  min-width: 44px;
+  min-height: 36px;
+  display: grid;
+  place-content: center;
+  border-radius: 999px;
+  background: #eaf0df;
+  color: #465138;
+  font-weight: 800;
+}
+
+.recipe-save-row label {
+  display: grid;
+  flex: 1;
+  gap: 7px;
+  color: #5f685d;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.recipe-save-row input {
+  min-height: 44px;
+  min-width: 0;
+  padding: 0 10px;
+  border: 1px solid #d9ddcf;
+  border-radius: 6px;
+  background: #fbfcf8;
+  color: #1f2520;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  outline: 0;
+}
+
+.recipe-save-row button,
+.recipe-item button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 6px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.recipe-save-row button {
+  min-width: 92px;
+  align-self: end;
+  background: #8f3528;
+  color: #fff;
+}
+
+.recipe-item button {
+  min-width: 76px;
+  background: #f2f4ec;
+  color: #8f3528;
+}
+
+.recipe-save-row button:disabled,
+.recipe-item button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.recipe-list {
+  display: grid;
+  gap: 10px;
+}
+
+.recipe-item {
+  min-height: 68px;
+  padding: 12px 14px;
+  border: 1px solid #e0e4d8;
+  border-radius: 8px;
+  background: #fbfcf8;
+}
+
+.recipe-item h3 {
+  color: #141714;
+  font-size: 18px;
+}
+
+.recipe-item p,
+.empty-recipes {
+  color: #697169;
+  font-size: 14px;
+}
+
+.empty-recipes {
+  padding: 12px 0;
 }
 
 .results-panel {
@@ -346,6 +463,17 @@ h1 {
   .ingredient-list,
   .mix-grid {
     grid-template-columns: 1fr;
+  }
+
+  .recipe-save-row,
+  .recipe-item {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .recipe-save-row button,
+  .recipe-item button {
+    width: 100%;
   }
 
   .results-panel {

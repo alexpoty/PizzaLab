@@ -1,6 +1,8 @@
 import './App.css'
 import { DoughForm } from './components/DoughForm'
+import { RecipeManager } from './components/RecipeManager'
 import { ResultsPanel } from './components/ResultsPanel'
+import { buildCalculationRequest } from './api/doughApi'
 import { useDoughCalculator } from './hooks/useDoughCalculator'
 
 function App() {
@@ -15,6 +17,7 @@ function App() {
     selectedPreset,
     calculate,
   } = useDoughCalculator()
+  const currentFormula = buildCalculationRequest(form, selectedPreset)
 
   return (
     <main className="app-shell">
@@ -43,6 +46,8 @@ function App() {
           />
           <ResultsPanel result={result} />
         </section>
+
+        <RecipeManager formula={currentFormula} />
       </section>
     </main>
   )

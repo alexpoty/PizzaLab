@@ -1,6 +1,13 @@
 spring:
   application:
     name: pizzalab-backend
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/pizzalab}
+    username: ${SPRING_DATASOURCE_USERNAME:pizzalab}
+    password: ${SPRING_DATASOURCE_PASSWORD:pizzalab}
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER:org.postgresql.Driver}
+  flyway:
+    enabled: true
 
 server:
   port: 8080

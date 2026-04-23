@@ -1,0 +1,20 @@
+CREATE TABLE recipes (
+    id UUID PRIMARY KEY,
+    name VARCHAR(120) NOT NULL,
+    pizza_count INTEGER NOT NULL,
+    dough_ball_weight_grams NUMERIC(8, 2) NOT NULL,
+    hydration_percent NUMERIC(5, 2) NOT NULL,
+    salt_percent NUMERIC(5, 2) NOT NULL,
+    yeast_type VARCHAR(40) NOT NULL,
+    dough_method VARCHAR(40) NOT NULL,
+    fermentation_preset VARCHAR(80),
+    fermentation_schedule_mode VARCHAR(40),
+    fermentation_schedule_room_hours NUMERIC(6, 2),
+    fermentation_schedule_cold_hours NUMERIC(6, 2),
+    fermentation_schedule_room_temperature_celsius NUMERIC(5, 2),
+    fermentation_schedule_cold_temperature_celsius NUMERIC(5, 2),
+    room_temperature_celsius NUMERIC(5, 2),
+    cold_temperature_celsius NUMERIC(5, 2),
+    preferment_flour_percent NUMERIC(5, 2),
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL
+);
