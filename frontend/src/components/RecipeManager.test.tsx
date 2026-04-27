@@ -252,6 +252,29 @@ describe('RecipeManager', () => {
     expect(deleteRecipe).toHaveBeenCalledWith('recipe-1')
     expect(screen.queryByText('Broken preview')).toBeNull()
   })
+
+  it('does not open a recipe when delete is triggered from the keyboard', async () => {
+    const recipe: Recipe = {
+      id: 'recipe-1',
+      name: 'Keyboard delete',
+      formula: originalFormula,
+      createdAt: '2026-04-27T00:00:00Z',
+    }
+
+    vi.mocked(fetchRecipes).mockResolvedValue([recipe])
+    vi.mocked(deleteRecipe).mockResolvedValue(undefined)
+    vi.mocked(calculateDough).mockResolvedValue(calculationResult)
+
+    render(<RecipeManagerHarness />)
+
+    const deleteButton = await screen.findByRole('button', { name: 'Delete Keyboard delete' })
+    deleteButton.focus()
+    await userEvent.keyboard('{Enter}')
+
+    expect(deleteRecipe).toHaveBeenCalledWith('recipe-1')
+    expect(calculateDough).not.toHaveBeenCalled()
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
 })
 
 function readCurrentFormula() {
