@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { useMemo, useState } from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { RecipeManager } from './RecipeManager'
@@ -91,6 +91,7 @@ const calculationResult: DoughCalculationResponse = {
 
 describe('RecipeManager', () => {
   afterEach(() => {
+    cleanup()
     vi.restoreAllMocks()
   })
 
@@ -191,6 +192,41 @@ describe('RecipeManager', () => {
       expect(readCurrentFormula()).toEqual({ ...editedFormula, fermentationSchedule: null })
     })
     expect(calculateDough).toHaveBeenNthCalledWith(3, editedFormula)
+  })
+
+  it('restores the loaded recipe formula when modal edits are canceled', async () => {
+    const initialRecipe: Recipe = {
+      id: 'recipe-1',
+      name: 'Original dough',
+      formula: originalFormula,
+      createdAt: '2026-04-27T00:00:00Z',
+    }
+
+    vi.mocked(fetchRecipes).mockResolvedValue([initialRecipe])
+    vi.mocked(deleteRecipe).mockResolvedValue(undefined)
+    vi.mocked(calculateDough).mockResolvedValue(calculationResult)
+
+    render(<RecipeManagerHarness />)
+
+    await userEvent.click(await screen.findByText('Original dough'))
+    await screen.findByRole('button', { name: 'Edit recipe' })
+
+    await userEvent.click(screen.getByRole('button', { name: 'Edit recipe' }))
+    const hydrationInput = screen.getByDisplayValue('65')
+    await userEvent.clear(hydrationInput)
+    await userEvent.type(hydrationInput, '68')
+    await userEvent.click(screen.getByRole('button', { name: 'Poolish' }))
+
+    await waitFor(() => {
+      expect(readCurrentFormula()).toEqual({ ...editedFormula, fermentationSchedule: null })
+    })
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    expect(screen.queryByRole('dialog')).toBeNull()
+    await waitFor(() => {
+      expect(readCurrentFormula()).toEqual({ ...originalFormula, fermentationSchedule: null })
+    })
   })
 })
 

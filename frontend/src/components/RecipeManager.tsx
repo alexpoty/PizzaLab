@@ -42,6 +42,7 @@ export function RecipeManager({
   onLoadRecipe,
 }: RecipeManagerProps) {
   const [recipes, setRecipes] = useState<Recipe[]>([])
+  const [loadedRecipe, setLoadedRecipe] = useState<Recipe | null>(null)
   const [preview, setPreview] = useState<RecipePreview | null>(null)
   const [newRecipeName, setNewRecipeName] = useState('')
   const [activeRecipeId, setActiveRecipeId] = useState<string | null>(null)
@@ -116,6 +117,7 @@ export function RecipeManager({
       setPreview((currentPreview) => (currentPreview?.recipe.id === id ? null : currentPreview))
       if (activeRecipeId === id) {
         setActiveRecipeId(null)
+        setLoadedRecipe(null)
       }
       if (preview?.recipe.id === id) {
         resetModal()
@@ -143,6 +145,7 @@ export function RecipeManager({
 
   const openRecipe = async (recipe: Recipe) => {
     setError(null)
+    setLoadedRecipe(recipe)
     setActiveRecipeId(recipe.id)
     setModalMode('view')
     setSourceRecipeName(null)
@@ -152,31 +155,30 @@ export function RecipeManager({
   }
 
   const startEditingRecipe = () => {
-    if (!preview) {
+    if (!loadedRecipe) {
       return
     }
 
     setError(null)
     setModalMode('edit')
-    setModalRecipeName(preview.recipe.name)
+    setModalRecipeName(loadedRecipe.name)
     setSourceRecipeName(null)
-    setActiveRecipeId(preview.recipe.id)
-    onLoadRecipe(preview.recipe.formula)
+    setActiveRecipeId(loadedRecipe.id)
+    onLoadRecipe(loadedRecipe.formula)
   }
 
   const startDuplicateRecipe = () => {
-    if (!preview) {
+    if (!loadedRecipe) {
       return
     }
 
-    const recipe = preview.recipe
-    const duplicateName = buildDuplicateRecipeName(recipe.name, recipes)
+    const duplicateName = buildDuplicateRecipeName(loadedRecipe.name, recipes)
 
     setError(null)
     setModalMode('duplicate')
-    setSourceRecipeName(recipe.name)
+    setSourceRecipeName(loadedRecipe.name)
     setModalRecipeName(duplicateName)
-    onLoadRecipe(recipe.formula)
+    onLoadRecipe(loadedRecipe.formula)
   }
 
   const saveModalRecipe = async () => {
@@ -310,6 +312,10 @@ export function RecipeManager({
   )
 
   function resetModal() {
+    if (modalMode !== 'view' && loadedRecipe) {
+      onLoadRecipe(loadedRecipe.formula)
+    }
+
     setPreview(null)
     setModalMode('view')
     setModalRecipeName('')
