@@ -228,6 +228,30 @@ describe('RecipeManager', () => {
       expect(readCurrentFormula()).toEqual({ ...originalFormula, fermentationSchedule: null })
     })
   })
+
+  it('keeps delete available when recipe preview calculation fails', async () => {
+    const failingRecipe: Recipe = {
+      id: 'recipe-1',
+      name: 'Broken preview',
+      formula: originalFormula,
+      createdAt: '2026-04-27T00:00:00Z',
+    }
+
+    vi.mocked(fetchRecipes).mockResolvedValue([failingRecipe])
+    vi.mocked(deleteRecipe).mockResolvedValue(undefined)
+    vi.mocked(calculateDough).mockRejectedValue(new Error('Recipe calculation failed'))
+
+    render(<RecipeManagerHarness />)
+
+    await userEvent.click(await screen.findByText('Broken preview'))
+    expect(await screen.findByText('Recipe calculation failed')).toBeTruthy()
+    expect(screen.queryByRole('dialog')).toBeNull()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Delete Broken preview' }))
+
+    expect(deleteRecipe).toHaveBeenCalledWith('recipe-1')
+    expect(screen.queryByText('Broken preview')).toBeNull()
+  })
 })
 
 function readCurrentFormula() {

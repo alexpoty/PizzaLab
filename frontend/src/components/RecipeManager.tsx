@@ -279,6 +279,7 @@ export function RecipeManager({
               isActive={recipe.id === activeRecipeId}
               isDisabled={isLoading}
               onSelect={openRecipe}
+              onDelete={(recipeId) => void removeRecipe(recipeId)}
             />
           ))
         )}

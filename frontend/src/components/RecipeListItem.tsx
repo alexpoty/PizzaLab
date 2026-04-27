@@ -5,6 +5,7 @@ type RecipeListItemProps = {
   isActive: boolean
   isDisabled: boolean
   onSelect: (recipe: Recipe) => void
+  onDelete: (recipeId: string) => void
 }
 
 export function RecipeListItem({
@@ -12,6 +13,7 @@ export function RecipeListItem({
   isActive,
   isDisabled,
   onSelect,
+  onDelete,
 }: RecipeListItemProps) {
   return (
     <article
@@ -35,12 +37,25 @@ export function RecipeListItem({
         }
       }}
     >
-      <div>
+      <div className="recipe-item-body">
         <h3>{recipe.name}</h3>
         <p>
           {recipe.formula.doughMethod.toLowerCase()} · {recipe.formula.hydrationPercent}%
           hydration · {recipe.formula.saltPercent}% salt
         </p>
+      </div>
+      <div className="recipe-actions">
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation()
+            onDelete(recipe.id)
+          }}
+          disabled={isDisabled}
+          aria-label={`Delete ${recipe.name}`}
+        >
+          Delete
+        </button>
       </div>
     </article>
   )
