@@ -8,7 +8,7 @@ type RecipeModalMode = 'view' | 'edit' | 'duplicate'
 
 type RecipeDetailModalProps = {
   recipe: Recipe
-  result: DoughCalculationResponse
+  result: DoughCalculationResponse | null
   mode: RecipeModalMode
   recipeName: string
   sourceRecipeName: string | null
@@ -19,6 +19,7 @@ type RecipeDetailModalProps = {
   compatiblePresets: PresetMetadata[]
   selectedPreset: PresetMetadata | undefined
   formError: string | null
+  resultError: string | null
   onChangeName: (name: string) => void
   onEdit: () => void
   onDuplicate: () => void
@@ -42,6 +43,7 @@ export function RecipeDetailModal({
   compatiblePresets,
   selectedPreset,
   formError,
+  resultError,
   onChangeName,
   onEdit,
   onDuplicate,
@@ -121,15 +123,21 @@ export function RecipeDetailModal({
           />
         )}
 
+        {mode === 'view' && resultError && <p className="error-message">{resultError}</p>}
+
         <div className="recipe-modal-grid">
           <div className="recipe-summary-block">
             <h3>Ingredients</h3>
-            <div className="recipe-ingredients large">
-              <span>Flour {formatGram(result.flourGrams)}</span>
-              <span>Water {formatGram(result.waterGrams)}</span>
-              <span>Salt {formatGram(result.saltGrams)}</span>
-              <span>Yeast {formatGram(result.yeastGrams)}</span>
-            </div>
+            {result ? (
+              <div className="recipe-ingredients large">
+                <span>Flour {formatGram(result.flourGrams)}</span>
+                <span>Water {formatGram(result.waterGrams)}</span>
+                <span>Salt {formatGram(result.saltGrams)}</span>
+                <span>Yeast {formatGram(result.yeastGrams)}</span>
+              </div>
+            ) : (
+              <p className="empty-recipes">Preview unavailable for this saved formula.</p>
+            )}
           </div>
 
           <div className="recipe-summary-block">

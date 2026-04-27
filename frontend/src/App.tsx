@@ -59,7 +59,6 @@ function App() {
           setForm={setForm}
           compatiblePresets={compatiblePresets}
           selectedPreset={selectedPreset}
-          calculationError={error}
           formula={currentFormula}
           onLoadRecipe={loadRecipe}
         />

@@ -19,14 +19,13 @@ type RecipeManagerProps = {
   setForm: Dispatch<SetStateAction<FormState>>
   compatiblePresets: PresetMetadata[]
   selectedPreset: PresetMetadata | undefined
-  calculationError: string | null
   formula: DoughCalculationRequest
   onLoadRecipe: (formula: DoughCalculationRequest) => void
 }
 
 type RecipePreview = {
   recipe: Recipe
-  result: DoughCalculationResponse
+  result: DoughCalculationResponse | null
 }
 
 type ModalMode = 'view' | 'edit' | 'duplicate'
@@ -37,7 +36,6 @@ export function RecipeManager({
   setForm,
   compatiblePresets,
   selectedPreset,
-  calculationError,
   formula,
   onLoadRecipe,
 }: RecipeManagerProps) {
@@ -130,21 +128,27 @@ export function RecipeManager({
     }
   }
 
-  const showRecipe = async (recipe: Recipe) => {
+  const showRecipe = async (recipe: Recipe, errorTarget: 'panel' | 'modal' = 'panel') => {
     setIsLoading(true)
-    setPanelError(null)
+    clearError(errorTarget)
 
     try {
       const result = await calculateDough(recipe.formula)
       setPreview({ recipe, result })
+      return true
     } catch (caught) {
-      setPanelError(caught instanceof Error ? caught.message : 'Recipe calculation failed')
+      setPreview({ recipe, result: null })
+      setErrorMessage(
+        errorTarget,
+        caught instanceof Error ? caught.message : 'Recipe calculation failed',
+      )
+      return false
     } finally {
       setIsLoading(false)
     }
   }
 
-  const openRecipe = async (recipe: Recipe) => {
+  const openRecipe = async (recipe: Recipe, errorTarget: 'panel' | 'modal' = 'panel') => {
     setPanelError(null)
     setModalError(null)
     setLoadedRecipe(recipe)
@@ -153,7 +157,7 @@ export function RecipeManager({
     setSourceRecipeName(null)
     setModalRecipeName(recipe.name)
     onLoadRecipe(recipe.formula)
-    await showRecipe(recipe)
+    return showRecipe(recipe, errorTarget)
   }
 
   const startEditingRecipe = () => {
@@ -209,7 +213,7 @@ export function RecipeManager({
           ? [savedRecipe, ...currentRecipes]
           : currentRecipes.map((recipe) => (recipe.id === savedRecipe.id ? savedRecipe : recipe)),
       )
-      await openRecipe(savedRecipe)
+      await openRecipe(savedRecipe, 'modal')
     } catch (caught) {
       setModalError(
         caught instanceof Error
@@ -300,7 +304,8 @@ export function RecipeManager({
           setForm={setForm}
           compatiblePresets={compatiblePresets}
           selectedPreset={selectedPreset}
-          formError={modalError ?? calculationError}
+          formError={modalError}
+          resultError={modalError}
           onChangeName={setModalRecipeName}
           onEdit={startEditingRecipe}
           onDuplicate={startDuplicateRecipe}
@@ -324,6 +329,24 @@ export function RecipeManager({
     setModalRecipeName('')
     setSourceRecipeName(null)
     setModalError(null)
+  }
+
+  function clearError(target: 'panel' | 'modal') {
+    if (target === 'modal') {
+      setModalError(null)
+      return
+    }
+
+    setPanelError(null)
+  }
+
+  function setErrorMessage(target: 'panel' | 'modal', message: string) {
+    if (target === 'modal') {
+      setModalError(message)
+      return
+    }
+
+    setPanelError(message)
   }
 }
 

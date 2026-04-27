@@ -245,7 +245,8 @@ describe('RecipeManager', () => {
 
     await userEvent.click(await screen.findByText('Broken preview'))
     expect(await screen.findByText('Recipe calculation failed')).toBeTruthy()
-    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.getByRole('dialog')).toBeTruthy()
+    expect(screen.getByText('Preview unavailable for this saved formula.')).toBeTruthy()
 
     await userEvent.click(screen.getByRole('button', { name: 'Delete Broken preview' }))
 
@@ -322,6 +323,40 @@ describe('RecipeManager', () => {
     expect(await screen.findByText('Update failed')).toBeTruthy()
     expect(screen.getByRole('dialog')).toBeTruthy()
   })
+
+  it('clears stale preview totals when recalculation fails after saving from the modal', async () => {
+    const recipe: Recipe = {
+      id: 'recipe-1',
+      name: 'Recalc failure',
+      formula: originalFormula,
+      createdAt: '2026-04-27T00:00:00Z',
+    }
+    const updatedRecipe: Recipe = {
+      ...recipe,
+      name: 'Recalc failure v2',
+      formula: editedFormula,
+    }
+
+    vi.mocked(fetchRecipes).mockResolvedValue([recipe])
+    vi.mocked(deleteRecipe).mockResolvedValue(undefined)
+    vi.mocked(updateRecipe).mockResolvedValue(updatedRecipe)
+    vi.mocked(calculateDough)
+      .mockResolvedValueOnce(calculationResult)
+      .mockRejectedValueOnce(new Error('Recalculation failed'))
+
+    render(<RecipeManagerHarness />)
+
+    await userEvent.click(await screen.findByText('Recalc failure'))
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit recipe' }))
+    await userEvent.clear(screen.getByDisplayValue('Recalc failure'))
+    await userEvent.type(screen.getByRole('textbox', { name: 'Recipe name' }), 'Recalc failure v2')
+    await userEvent.click(screen.getByRole('button', { name: 'Update recipe' }))
+
+    expect(await screen.findByText('Recalculation failed')).toBeTruthy()
+    expect(screen.getByText('Preview unavailable for this saved formula.')).toBeTruthy()
+    expect(screen.queryByText('Flour 1000.0g')).toBeNull()
+    expect(screen.getByRole('dialog')).toBeTruthy()
+  })
 })
 
 function readCurrentFormula() {
@@ -365,7 +400,6 @@ function RecipeManagerHarness() {
         setForm={setForm}
         compatiblePresets={compatiblePresets}
         selectedPreset={selectedPreset}
-        calculationError={null}
         formula={formula}
         onLoadRecipe={(loadedFormula) =>
           setForm((current) => applyRecipeFormulaToForm(current, loadedFormula))
