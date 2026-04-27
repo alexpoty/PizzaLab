@@ -298,6 +298,8 @@ describe('RecipeManager', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Preview dough' }))
 
     expect(await screen.findByText('Preview failed')).toBeTruthy()
+    expect(screen.getByText('Preview unavailable for this saved formula.')).toBeTruthy()
+    expect(screen.queryByText('Flour 1000.0g')).toBeNull()
     expect(screen.getByRole('dialog')).toBeTruthy()
   })
 

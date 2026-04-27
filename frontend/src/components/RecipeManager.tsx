@@ -242,6 +242,10 @@ export function RecipeManager({
         result,
       })
     } catch (caught) {
+      setPreview({
+        recipe: buildModalRecipe(preview.recipe, modalMode, modalRecipeName, formula),
+        result: null,
+      })
       setModalError(caught instanceof Error ? caught.message : 'Recipe calculation failed')
     } finally {
       setIsLoading(false)
