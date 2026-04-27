@@ -128,7 +128,7 @@ export function RecipeManager({
     }
   }
 
-  const showRecipe = async (recipe: Recipe, errorTarget: 'panel' | 'modal' = 'panel') => {
+  const showRecipe = async (recipe: Recipe, errorTarget: 'panel' | 'modal' = 'modal') => {
     setIsLoading(true)
     clearError(errorTarget)
 
@@ -148,7 +148,7 @@ export function RecipeManager({
     }
   }
 
-  const openRecipe = async (recipe: Recipe, errorTarget: 'panel' | 'modal' = 'panel') => {
+  const openRecipe = async (recipe: Recipe, errorTarget: 'panel' | 'modal' = 'modal') => {
     setPanelError(null)
     setModalError(null)
     setLoadedRecipe(recipe)

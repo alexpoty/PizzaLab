@@ -247,6 +247,7 @@ describe('RecipeManager', () => {
     expect(await screen.findByText('Recipe calculation failed')).toBeTruthy()
     expect(screen.getByRole('dialog')).toBeTruthy()
     expect(screen.getByText('Preview unavailable for this saved formula.')).toBeTruthy()
+    expect(screen.queryAllByText('Recipe calculation failed').length).toBeGreaterThan(0)
 
     await userEvent.click(screen.getByRole('button', { name: 'Delete Broken preview' }))
 
