@@ -7,6 +7,8 @@ import com.pizzalab.backend.persistence.recipe.RecipeJdbcRepository
 import com.pizzalab.backend.persistence.recipe.toRecord
 import com.pizzalab.backend.persistence.recipe.toResponse
 import org.springframework.stereotype.Service
+import org.springframework.web.server.ResponseStatusException
+import org.springframework.http.HttpStatus
 import java.util.UUID
 
 @Service
@@ -19,6 +21,14 @@ class RecipeManagementUseCase(
     fun create(request: CreateRecipeRequest): RecipeResponse {
         request.formula.toFormula()
         return recipeRepository.save(request.toRecord()).toResponse()
+    }
+
+    fun update(id: UUID, request: CreateRecipeRequest): RecipeResponse {
+        request.formula.toFormula()
+        val existingRecipe = recipeRepository.findById(id).orElseThrow {
+            ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found.")
+        }
+        return recipeRepository.save(request.toRecord(existingRecipe)).toResponse()
     }
 
     /**

@@ -25,6 +25,21 @@ export async function createRecipe(request: CreateRecipeRequest): Promise<Recipe
   return data
 }
 
+export async function updateRecipe(id: string, request: CreateRecipeRequest): Promise<Recipe> {
+  const response = await fetch(`/api/recipes/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  })
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(data.message ?? 'Recipe update failed')
+  }
+
+  return data
+}
+
 export async function deleteRecipe(id: string): Promise<void> {
   const response = await fetch(`/api/recipes/${id}`, {
     method: 'DELETE',

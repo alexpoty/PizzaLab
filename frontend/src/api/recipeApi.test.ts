@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { createRecipe, deleteRecipe, fetchRecipes } from './recipeApi'
+import { createRecipe, deleteRecipe, fetchRecipes, updateRecipe } from './recipeApi'
 import type { CreateRecipeRequest } from '../types/recipe'
 
 const recipeRequest: CreateRecipeRequest = {
@@ -56,6 +56,30 @@ describe('recipeApi', () => {
     await expect(deleteRecipe('recipe-id')).resolves.toBeUndefined()
     expect(fetch).toHaveBeenCalledWith('/api/recipes/recipe-id', {
       method: 'DELETE',
+    })
+  })
+
+  it('updates a recipe', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        id: 'recipe-id',
+        ...recipeRequest,
+        name: '24h direct dough v2',
+        createdAt: '2026-04-23T00:00:00Z',
+      }),
+    } as Response)
+
+    await expect(
+      updateRecipe('recipe-id', { ...recipeRequest, name: '24h direct dough v2' }),
+    ).resolves.toMatchObject({
+      id: 'recipe-id',
+      name: '24h direct dough v2',
+    })
+    expect(fetch).toHaveBeenCalledWith('/api/recipes/recipe-id', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...recipeRequest, name: '24h direct dough v2' }),
     })
   })
 })

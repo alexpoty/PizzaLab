@@ -12,6 +12,8 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
+import org.springframework.test.web.servlet.put
+import java.util.UUID
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -146,6 +148,114 @@ class RecipeControllerTest(
             .andExpect {
                 status { isOk() }
                 jsonPath("$", hasSize<Any>(0))
+            }
+    }
+
+    @Test
+    fun `updates saved recipe`() {
+        val createResult = mockMvc.post("/api/recipes") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "name": "Original dough",
+                  "formula": {
+                    "pizzaCount": 4,
+                    "doughBallWeightGrams": 250,
+                    "hydrationPercent": 65,
+                    "saltPercent": 2.8,
+                    "yeastType": "INSTANT",
+                    "doughMethod": "DIRECT",
+                    "fermentationPreset": "ROOM_24H",
+                    "roomTemperatureCelsius": 20
+                  }
+                }
+            """.trimIndent()
+        }
+            .andExpect {
+                status { isOk() }
+            }
+            .andReturn()
+
+        val id = Regex(""""id":"([^"]+)"""")
+            .find(createResult.response.contentAsString)
+            ?.groupValues
+            ?.get(1)
+            ?: error("Recipe id was not returned")
+
+        mockMvc.put("/api/recipes/$id") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "name": "Original dough v2",
+                  "formula": {
+                    "pizzaCount": 6,
+                    "doughBallWeightGrams": 270,
+                    "hydrationPercent": 68,
+                    "saltPercent": 2.6,
+                    "yeastType": "FRESH",
+                    "doughMethod": "POOLISH",
+                    "prefermentFlourPercent": 35,
+                    "fermentationSchedule": {
+                      "mode": "MIXED",
+                      "roomHours": 18,
+                      "roomTemperatureCelsius": 21,
+                      "coldHours": 24,
+                      "coldTemperatureCelsius": 4
+                    }
+                  }
+                }
+            """.trimIndent()
+        }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.id") { value(id) }
+                jsonPath("$.name") { value("Original dough v2") }
+                jsonPath("$.formula.pizzaCount") { value(6) }
+                jsonPath("$.formula.doughBallWeightGrams") { value(270.0) }
+                jsonPath("$.formula.hydrationPercent") { value(68.0) }
+                jsonPath("$.formula.saltPercent") { value(2.6) }
+                jsonPath("$.formula.yeastType") { value("FRESH") }
+                jsonPath("$.formula.doughMethod") { value("POOLISH") }
+                jsonPath("$.formula.prefermentFlourPercent") { value(35.0) }
+                jsonPath("$.formula.fermentationSchedule.mode") { value("MIXED") }
+                jsonPath("$.formula.fermentationSchedule.roomHours") { value(18.0) }
+                jsonPath("$.formula.fermentationSchedule.roomTemperatureCelsius") { value(21.0) }
+                jsonPath("$.formula.fermentationSchedule.coldHours") { value(24.0) }
+                jsonPath("$.formula.fermentationSchedule.coldTemperatureCelsius") { value(4.0) }
+            }
+
+        mockMvc.get("/api/recipes")
+            .andExpect {
+                status { isOk() }
+                jsonPath("$", hasSize<Any>(1))
+                jsonPath("$[0].id") { value(id) }
+                jsonPath("$[0].name") { value("Original dough v2") }
+                jsonPath("$[0].formula.doughMethod") { value("POOLISH") }
+            }
+    }
+
+    @Test
+    fun `returns not found when updating missing recipe`() {
+        mockMvc.put("/api/recipes/${UUID.randomUUID()}") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "name": "Missing recipe",
+                  "formula": {
+                    "pizzaCount": 4,
+                    "doughBallWeightGrams": 250,
+                    "hydrationPercent": 65,
+                    "saltPercent": 2.8,
+                    "yeastType": "INSTANT",
+                    "doughMethod": "DIRECT",
+                    "fermentationPreset": "ROOM_24H",
+                    "roomTemperatureCelsius": 20
+                  }
+                }
+            """.trimIndent()
+        }
+            .andExpect {
+                status { isNotFound() }
             }
     }
 

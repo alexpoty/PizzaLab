@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { calculateDough } from '../api/doughApi'
-import { createRecipe, deleteRecipe, fetchRecipes } from '../api/recipeApi'
+import { createRecipe, deleteRecipe, fetchRecipes, updateRecipe } from '../api/recipeApi'
 import type { DoughCalculationRequest, DoughCalculationResponse } from '../types/dough'
 import type { Recipe } from '../types/recipe'
 import { RecipeDetailModal } from './RecipeDetailModal'
@@ -20,6 +20,7 @@ export function RecipeManager({ formula, onLoadRecipe }: RecipeManagerProps) {
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [preview, setPreview] = useState<RecipePreview | null>(null)
   const [recipeName, setRecipeName] = useState('')
+  const [activeRecipeId, setActiveRecipeId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -57,12 +58,26 @@ export function RecipeManager({ formula, onLoadRecipe }: RecipeManagerProps) {
     setError(null)
 
     try {
-      const savedRecipe = await createRecipe({ name, formula })
-      setRecipes((currentRecipes) => [savedRecipe, ...currentRecipes])
-      await openRecipe(savedRecipe)
-      setRecipeName('')
+      const savedRecipe = activeRecipeId
+        ? await updateRecipe(activeRecipeId, { name, formula })
+        : await createRecipe({ name, formula })
+
+      setRecipes((currentRecipes) =>
+        activeRecipeId
+          ? currentRecipes.map((recipe) => (recipe.id === savedRecipe.id ? savedRecipe : recipe))
+          : [savedRecipe, ...currentRecipes],
+      )
+      setActiveRecipeId(savedRecipe.id)
+      setRecipeName(savedRecipe.name)
+      await loadRecipe(savedRecipe)
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Recipe save failed')
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : activeRecipeId
+            ? 'Recipe update failed'
+            : 'Recipe save failed',
+      )
     } finally {
       setIsLoading(false)
     }
@@ -76,6 +91,10 @@ export function RecipeManager({ formula, onLoadRecipe }: RecipeManagerProps) {
       await deleteRecipe(id)
       setRecipes((currentRecipes) => currentRecipes.filter((recipe) => recipe.id !== id))
       setPreview((currentPreview) => (currentPreview?.recipe.id === id ? null : currentPreview))
+      if (activeRecipeId === id) {
+        setActiveRecipeId(null)
+        setRecipeName('')
+      }
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Recipe delete failed')
     } finally {
@@ -98,8 +117,50 @@ export function RecipeManager({ formula, onLoadRecipe }: RecipeManagerProps) {
   }
 
   const openRecipe = async (recipe: Recipe) => {
+    setActiveRecipeId(recipe.id)
+    setRecipeName(recipe.name)
     onLoadRecipe(recipe.formula)
     await showRecipe(recipe)
+  }
+
+  const loadRecipe = async (recipe: Recipe) => {
+    await openRecipe(recipe)
+  }
+
+  const editRecipe = (recipe: Recipe) => {
+    setError(null)
+    setActiveRecipeId(recipe.id)
+    setRecipeName(recipe.name)
+    onLoadRecipe(recipe.formula)
+  }
+
+  const duplicateRecipe = async (recipe: Recipe) => {
+    const duplicateName = buildDuplicateRecipeName(recipe.name, recipes)
+
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const duplicatedRecipe = await createRecipe({
+        name: duplicateName,
+        formula: recipe.formula,
+      })
+      setRecipes((currentRecipes) => [duplicatedRecipe, ...currentRecipes])
+      setActiveRecipeId(duplicatedRecipe.id)
+      setRecipeName(duplicatedRecipe.name)
+      onLoadRecipe(duplicatedRecipe.formula)
+      await showRecipe(duplicatedRecipe)
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Recipe duplicate failed')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const resetEditing = () => {
+    setActiveRecipeId(null)
+    setRecipeName('')
+    setError(null)
   }
 
   return (
@@ -122,8 +183,13 @@ export function RecipeManager({ formula, onLoadRecipe }: RecipeManagerProps) {
           />
         </label>
         <button type="button" onClick={saveRecipe} disabled={isLoading}>
-          Save
+          {activeRecipeId ? 'Update' : 'Save'}
         </button>
+        {activeRecipeId && (
+          <button type="button" onClick={resetEditing} disabled={isLoading}>
+            Cancel
+          </button>
+        )}
       </div>
 
       {error && <p className="error-message">{error}</p>}
@@ -137,7 +203,9 @@ export function RecipeManager({ formula, onLoadRecipe }: RecipeManagerProps) {
               key={recipe.id}
               recipe={recipe}
               isDisabled={isLoading}
-              onOpen={openRecipe}
+              onLoad={loadRecipe}
+              onEdit={editRecipe}
+              onDuplicate={duplicateRecipe}
               onDelete={removeRecipe}
             />
           ))
@@ -153,4 +221,24 @@ export function RecipeManager({ formula, onLoadRecipe }: RecipeManagerProps) {
       )}
     </section>
   )
+}
+
+function buildDuplicateRecipeName(name: string, recipes: Recipe[]) {
+  const trimmedName = name.trim()
+  const existingNames = new Set(recipes.map((recipe) => recipe.name))
+  const baseName = `${trimmedName} copy`
+
+  if (!existingNames.has(baseName)) {
+    return baseName
+  }
+
+  let copyIndex = 2
+  let nextName = `${trimmedName} copy ${copyIndex}`
+
+  while (existingNames.has(nextName)) {
+    copyIndex += 1
+    nextName = `${trimmedName} copy ${copyIndex}`
+  }
+
+  return nextName
 }
