@@ -106,9 +106,9 @@ export function RecipeManager({
     }
   }
 
-  const removeRecipe = async (id: string) => {
+  const removeRecipe = async (id: string, errorTarget: 'panel' | 'modal' = 'panel') => {
     setIsLoading(true)
-    setPanelError(null)
+    clearError(errorTarget)
 
     try {
       await deleteRecipe(id)
@@ -122,7 +122,10 @@ export function RecipeManager({
         resetModal()
       }
     } catch (caught) {
-      setPanelError(caught instanceof Error ? caught.message : 'Recipe delete failed')
+      setErrorMessage(
+        errorTarget,
+        caught instanceof Error ? caught.message : 'Recipe delete failed',
+      )
     } finally {
       setIsLoading(false)
     }
@@ -289,7 +292,7 @@ export function RecipeManager({
               isActive={recipe.id === activeRecipeId}
               isDisabled={isLoading}
               onSelect={openRecipe}
-              onDelete={(recipeId) => void removeRecipe(recipeId)}
+              onDelete={(recipeId) => void removeRecipe(recipeId, 'panel')}
             />
           ))
         )}
@@ -315,7 +318,7 @@ export function RecipeManager({
           onDuplicate={startDuplicateRecipe}
           onPreview={previewModalRecipe}
           onSave={saveModalRecipe}
-          onDelete={() => void removeRecipe(preview.recipe.id)}
+          onDelete={() => void removeRecipe(preview.recipe.id, 'modal')}
           onCancelEdit={resetModal}
           onClose={resetModal}
         />

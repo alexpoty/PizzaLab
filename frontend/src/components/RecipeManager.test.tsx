@@ -360,6 +360,27 @@ describe('RecipeManager', () => {
     expect(screen.queryByText('Flour 1000.0g')).toBeNull()
     expect(screen.getByRole('dialog')).toBeTruthy()
   })
+
+  it('shows delete failures inside the modal', async () => {
+    const recipe: Recipe = {
+      id: 'recipe-1',
+      name: 'Delete failure',
+      formula: originalFormula,
+      createdAt: '2026-04-27T00:00:00Z',
+    }
+
+    vi.mocked(fetchRecipes).mockResolvedValue([recipe])
+    vi.mocked(deleteRecipe).mockRejectedValue(new Error('Delete failed'))
+    vi.mocked(calculateDough).mockResolvedValue(calculationResult)
+
+    render(<RecipeManagerHarness />)
+
+    await userEvent.click(await screen.findByText('Delete failure'))
+    await userEvent.click(await screen.findByRole('button', { name: 'Delete' }))
+
+    expect(await screen.findByText('Delete failed')).toBeTruthy()
+    expect(screen.getByRole('dialog')).toBeTruthy()
+  })
 })
 
 function readCurrentFormula() {
