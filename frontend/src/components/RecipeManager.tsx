@@ -1,12 +1,25 @@
-import { useEffect, useState } from 'react'
+import type { Dispatch, SetStateAction } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { calculateDough } from '../api/doughApi'
 import { createRecipe, deleteRecipe, fetchRecipes, updateRecipe } from '../api/recipeApi'
-import type { DoughCalculationRequest, DoughCalculationResponse } from '../types/dough'
+import type {
+  DoughCalculationRequest,
+  DoughCalculationResponse,
+  DoughMetadata,
+  FormState,
+  PresetMetadata,
+} from '../types/dough'
 import type { Recipe } from '../types/recipe'
 import { RecipeDetailModal } from './RecipeDetailModal'
 import { RecipeListItem } from './RecipeListItem'
 
 type RecipeManagerProps = {
+  metadata: DoughMetadata
+  form: FormState
+  setForm: Dispatch<SetStateAction<FormState>>
+  compatiblePresets: PresetMetadata[]
+  selectedPreset: PresetMetadata | undefined
+  calculationError: string | null
   formula: DoughCalculationRequest
   onLoadRecipe: (formula: DoughCalculationRequest) => void
 }
@@ -16,13 +29,43 @@ type RecipePreview = {
   result: DoughCalculationResponse
 }
 
-export function RecipeManager({ formula, onLoadRecipe }: RecipeManagerProps) {
+type ModalMode = 'view' | 'edit' | 'duplicate'
+
+export function RecipeManager({
+  metadata,
+  form,
+  setForm,
+  compatiblePresets,
+  selectedPreset,
+  calculationError,
+  formula,
+  onLoadRecipe,
+}: RecipeManagerProps) {
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [preview, setPreview] = useState<RecipePreview | null>(null)
-  const [recipeName, setRecipeName] = useState('')
+  const [newRecipeName, setNewRecipeName] = useState('')
   const [activeRecipeId, setActiveRecipeId] = useState<string | null>(null)
+  const [modalMode, setModalMode] = useState<ModalMode>('view')
+  const [modalRecipeName, setModalRecipeName] = useState('')
+  const [sourceRecipeName, setSourceRecipeName] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const modalRecipe = useMemo(() => {
+    if (!preview) {
+      return null
+    }
+
+    if (modalMode === 'view') {
+      return preview.recipe
+    }
+
+    return {
+      ...preview.recipe,
+      name: modalRecipeName.trim() || preview.recipe.name,
+      formula,
+    }
+  }, [formula, modalMode, modalRecipeName, preview])
 
   useEffect(() => {
     let isMounted = true
@@ -46,8 +89,8 @@ export function RecipeManager({ formula, onLoadRecipe }: RecipeManagerProps) {
 
   // Recipes persist the formula input. Ingredient details are calculated on demand
   // so the modal always uses the same calculator logic as the main results panel.
-  const saveRecipe = async () => {
-    const name = recipeName.trim()
+  const saveNewRecipe = async () => {
+    const name = newRecipeName.trim()
 
     if (!name) {
       setError('Recipe name is required')
@@ -58,26 +101,12 @@ export function RecipeManager({ formula, onLoadRecipe }: RecipeManagerProps) {
     setError(null)
 
     try {
-      const savedRecipe = activeRecipeId
-        ? await updateRecipe(activeRecipeId, { name, formula })
-        : await createRecipe({ name, formula })
-
-      setRecipes((currentRecipes) =>
-        activeRecipeId
-          ? currentRecipes.map((recipe) => (recipe.id === savedRecipe.id ? savedRecipe : recipe))
-          : [savedRecipe, ...currentRecipes],
-      )
-      setActiveRecipeId(savedRecipe.id)
-      setRecipeName(savedRecipe.name)
-      await loadRecipe(savedRecipe)
+      const savedRecipe = await createRecipe({ name, formula })
+      setRecipes((currentRecipes) => [savedRecipe, ...currentRecipes])
+      setNewRecipeName('')
+      await openRecipe(savedRecipe)
     } catch (caught) {
-      setError(
-        caught instanceof Error
-          ? caught.message
-          : activeRecipeId
-            ? 'Recipe update failed'
-            : 'Recipe save failed',
-      )
+      setError(caught instanceof Error ? caught.message : 'Recipe save failed')
     } finally {
       setIsLoading(false)
     }
@@ -93,7 +122,9 @@ export function RecipeManager({ formula, onLoadRecipe }: RecipeManagerProps) {
       setPreview((currentPreview) => (currentPreview?.recipe.id === id ? null : currentPreview))
       if (activeRecipeId === id) {
         setActiveRecipeId(null)
-        setRecipeName('')
+      }
+      if (preview?.recipe.id === id) {
+        resetModal()
       }
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Recipe delete failed')
@@ -117,50 +148,106 @@ export function RecipeManager({ formula, onLoadRecipe }: RecipeManagerProps) {
   }
 
   const openRecipe = async (recipe: Recipe) => {
+    setError(null)
     setActiveRecipeId(recipe.id)
-    setRecipeName(recipe.name)
+    setModalMode('view')
+    setSourceRecipeName(null)
+    setModalRecipeName(recipe.name)
     onLoadRecipe(recipe.formula)
     await showRecipe(recipe)
   }
 
-  const loadRecipe = async (recipe: Recipe) => {
-    await openRecipe(recipe)
+  const startEditingRecipe = () => {
+    if (!preview) {
+      return
+    }
+
+    setError(null)
+    setModalMode('edit')
+    setModalRecipeName(preview.recipe.name)
+    setSourceRecipeName(null)
+    setActiveRecipeId(preview.recipe.id)
+    onLoadRecipe(preview.recipe.formula)
   }
 
-  const editRecipe = (recipe: Recipe) => {
+  const startDuplicateRecipe = () => {
+    if (!preview) {
+      return
+    }
+
+    const recipe = preview.recipe
+    const duplicateName = buildDuplicateRecipeName(recipe.name, recipes)
+
     setError(null)
-    setActiveRecipeId(recipe.id)
-    setRecipeName(recipe.name)
+    setModalMode('duplicate')
+    setSourceRecipeName(recipe.name)
+    setModalRecipeName(duplicateName)
     onLoadRecipe(recipe.formula)
   }
 
-  const duplicateRecipe = async (recipe: Recipe) => {
-    const duplicateName = buildDuplicateRecipeName(recipe.name, recipes)
+  const saveModalRecipe = async () => {
+    if (!preview) {
+      return
+    }
+
+    const name = modalRecipeName.trim()
+
+    if (!name) {
+      setError('Recipe name is required')
+      return
+    }
 
     setIsLoading(true)
     setError(null)
 
     try {
-      const duplicatedRecipe = await createRecipe({
-        name: duplicateName,
-        formula: recipe.formula,
-      })
-      setRecipes((currentRecipes) => [duplicatedRecipe, ...currentRecipes])
-      setActiveRecipeId(duplicatedRecipe.id)
-      setRecipeName(duplicatedRecipe.name)
-      onLoadRecipe(duplicatedRecipe.formula)
-      await showRecipe(duplicatedRecipe)
+      const savedRecipe =
+        modalMode === 'duplicate'
+          ? await createRecipe({ name, formula })
+          : await updateRecipe(preview.recipe.id, { name, formula })
+
+      setRecipes((currentRecipes) =>
+        modalMode === 'duplicate'
+          ? [savedRecipe, ...currentRecipes]
+          : currentRecipes.map((recipe) => (recipe.id === savedRecipe.id ? savedRecipe : recipe)),
+      )
+      await openRecipe(savedRecipe)
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Recipe duplicate failed')
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : modalMode === 'duplicate'
+            ? 'Recipe duplicate failed'
+            : 'Recipe update failed',
+      )
     } finally {
       setIsLoading(false)
     }
   }
 
-  const resetEditing = () => {
-    setActiveRecipeId(null)
-    setRecipeName('')
+  const previewModalRecipe = async () => {
+    if (!preview) {
+      return
+    }
+
+    setIsLoading(true)
     setError(null)
+
+    try {
+      const result = await calculateDough(formula)
+      setPreview({
+        recipe: {
+          ...preview.recipe,
+          name: modalRecipeName.trim() || preview.recipe.name,
+          formula,
+        },
+        result,
+      })
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Recipe calculation failed')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -177,19 +264,14 @@ export function RecipeManager({ formula, onLoadRecipe }: RecipeManagerProps) {
         <label>
           <span>Name</span>
           <input
-            value={recipeName}
-            onChange={(event) => setRecipeName(event.target.value)}
+            value={newRecipeName}
+            onChange={(event) => setNewRecipeName(event.target.value)}
             placeholder="24h room direct"
           />
         </label>
-        <button type="button" onClick={saveRecipe} disabled={isLoading}>
-          {activeRecipeId ? 'Update' : 'Save'}
+        <button type="button" onClick={saveNewRecipe} disabled={isLoading}>
+          Save current
         </button>
-        {activeRecipeId && (
-          <button type="button" onClick={resetEditing} disabled={isLoading}>
-            Cancel
-          </button>
-        )}
       </div>
 
       {error && <p className="error-message">{error}</p>}
@@ -202,11 +284,9 @@ export function RecipeManager({ formula, onLoadRecipe }: RecipeManagerProps) {
             <RecipeListItem
               key={recipe.id}
               recipe={recipe}
+              isActive={recipe.id === activeRecipeId}
               isDisabled={isLoading}
-              onLoad={loadRecipe}
-              onEdit={editRecipe}
-              onDuplicate={duplicateRecipe}
-              onDelete={removeRecipe}
+              onSelect={openRecipe}
             />
           ))
         )}
@@ -214,13 +294,38 @@ export function RecipeManager({ formula, onLoadRecipe }: RecipeManagerProps) {
 
       {preview && (
         <RecipeDetailModal
-          recipe={preview.recipe}
+          recipe={modalRecipe ?? preview.recipe}
           result={preview.result}
-          onClose={() => setPreview(null)}
+          mode={modalMode}
+          recipeName={modalRecipeName}
+          sourceRecipeName={sourceRecipeName}
+          isLoading={isLoading}
+          metadata={metadata}
+          form={form}
+          setForm={setForm}
+          compatiblePresets={compatiblePresets}
+          selectedPreset={selectedPreset}
+          formError={calculationError}
+          onChangeName={setModalRecipeName}
+          onEdit={startEditingRecipe}
+          onDuplicate={startDuplicateRecipe}
+          onPreview={previewModalRecipe}
+          onSave={saveModalRecipe}
+          onDelete={() => void removeRecipe(preview.recipe.id)}
+          onCancelEdit={resetModal}
+          onClose={resetModal}
         />
       )}
     </section>
   )
+
+  function resetModal() {
+    setPreview(null)
+    setModalMode('view')
+    setModalRecipeName('')
+    setSourceRecipeName(null)
+    setError(null)
+  }
 }
 
 function buildDuplicateRecipeName(name: string, recipes: Recipe[]) {

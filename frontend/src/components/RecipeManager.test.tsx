@@ -1,11 +1,17 @@
 // @vitest-environment jsdom
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { RecipeManager } from './RecipeManager'
-import type { DoughCalculationRequest, DoughCalculationResponse } from '../types/dough'
+import { buildCalculationRequest } from '../api/doughApi'
+import { defaultMetadata } from '../data/doughDefaults'
+import type {
+  DoughCalculationRequest,
+  DoughCalculationResponse,
+  FormState,
+} from '../types/dough'
 import type { Recipe } from '../types/recipe'
 import {
   createRecipe,
@@ -22,9 +28,14 @@ vi.mock('../api/recipeApi', () => ({
   deleteRecipe: vi.fn(),
 }))
 
-vi.mock('../api/doughApi', () => ({
-  calculateDough: vi.fn(),
-}))
+vi.mock('../api/doughApi', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../api/doughApi')>()
+
+  return {
+    ...actual,
+    calculateDough: vi.fn(),
+  }
+})
 
 const originalFormula: DoughCalculationRequest = {
   pizzaCount: 4,
@@ -38,20 +49,15 @@ const originalFormula: DoughCalculationRequest = {
 }
 
 const editedFormula: DoughCalculationRequest = {
-  pizzaCount: 6,
-  doughBallWeightGrams: 270,
+  pizzaCount: 4,
+  doughBallWeightGrams: 250,
   hydrationPercent: 68,
-  saltPercent: 2.6,
-  yeastType: 'FRESH',
+  saltPercent: 2.8,
+  yeastType: 'INSTANT',
   doughMethod: 'POOLISH',
-  fermentationSchedule: {
-    mode: 'MIXED',
-    roomHours: 18,
-    roomTemperatureCelsius: 21,
-    coldHours: 24,
-    coldTemperatureCelsius: 4,
-  },
-  prefermentFlourPercent: 35,
+  fermentationPreset: 'ROOM_24H',
+  roomTemperatureCelsius: 20,
+  prefermentFlourPercent: 30,
 }
 
 const calculationResult: DoughCalculationResponse = {
@@ -87,7 +93,7 @@ describe('RecipeManager', () => {
     vi.restoreAllMocks()
   })
 
-  it('supports load, edit, and duplicate flows without breaking calculation', async () => {
+  it('opens recipes on click and edits or duplicates them from the modal', async () => {
     const initialRecipe: Recipe = {
       id: 'recipe-1',
       name: 'Original dough',
@@ -115,48 +121,84 @@ describe('RecipeManager', () => {
     render(<RecipeManagerHarness />)
 
     expect(await screen.findByText('Original dough')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Load' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull()
 
-    await userEvent.click(screen.getByRole('button', { name: 'Load' }))
+    await userEvent.click(screen.getByText('Original dough'))
 
     await waitFor(() => {
-      expect(screen.getByTestId('current-formula').textContent).toBe(JSON.stringify(originalFormula))
+      expect(readCurrentFormula()).toEqual({ ...originalFormula, fermentationSchedule: null })
     })
-    expect(calculateDough).toHaveBeenCalledWith(originalFormula)
+    expect(await screen.findByRole('button', { name: 'Edit recipe' })).toBeTruthy()
+    expect(screen.getByText(/Click Edit recipe to change the loaded formula/)).toBeTruthy()
+    expect(calculateDough).toHaveBeenNthCalledWith(1, originalFormula)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Edit' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Apply variant formula' }))
-    await userEvent.clear(screen.getByPlaceholderText('24h room direct'))
-    await userEvent.type(screen.getByPlaceholderText('24h room direct'), 'Original dough v2')
-    await userEvent.click(screen.getByRole('button', { name: 'Update' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Edit recipe' }))
+    await userEvent.clear(screen.getByDisplayValue('Original dough'))
+    await userEvent.type(screen.getByRole('textbox', { name: 'Recipe name' }), 'Original dough v2')
+    expect(screen.getByRole('button', { name: 'Preview dough' })).toBeTruthy()
+    expect(screen.getByText(/Change hydration, method, temperatures, and the rest of the formula below/)).toBeTruthy()
+    const hydrationInput = screen.getByDisplayValue('65')
+    await userEvent.clear(hydrationInput)
+    await userEvent.type(hydrationInput, '68')
+    await userEvent.click(screen.getByRole('button', { name: 'Poolish' }))
+    await waitFor(() => {
+      expect(readCurrentFormula()).toEqual({ ...editedFormula, fermentationSchedule: null })
+    })
+    await userEvent.click(screen.getByRole('button', { name: 'Update recipe' }))
 
     expect(updateRecipe).toHaveBeenCalledWith('recipe-1', {
       name: 'Original dough v2',
-      formula: editedFormula,
+      formula: expect.objectContaining({
+        hydrationPercent: 68,
+        doughMethod: 'POOLISH',
+        fermentationPreset: 'ROOM_24H',
+        prefermentFlourPercent: 30,
+      }),
     })
     expect((await screen.findAllByText('Original dough v2')).length).toBeGreaterThan(0)
     await waitFor(() => {
-      expect(screen.getByTestId('current-formula').textContent).toBe(JSON.stringify(editedFormula))
+      expect(readCurrentFormula()).toEqual({ ...editedFormula, fermentationSchedule: null })
+    })
+    expect(calculateDough).toHaveBeenNthCalledWith(2, editedFormula)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Duplicate' }))
+
+    expect(createRecipe).not.toHaveBeenCalled()
+    expect(screen.getByDisplayValue('Original dough v2 copy')).toBeTruthy()
+    expect(
+      screen.getByText(/Copy draft from "Original dough v2" is editable here/),
+    ).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Save copy' })).toBeTruthy()
+    await waitFor(() => {
+      expect(readCurrentFormula()).toEqual({ ...editedFormula, fermentationSchedule: null })
     })
 
-    const duplicateButtons = screen.getAllByRole('button', { name: 'Duplicate' })
-    await userEvent.click(duplicateButtons[0])
+    await userEvent.click(screen.getByRole('button', { name: 'Save copy' }))
 
     expect(createRecipe).toHaveBeenCalledWith({
       name: 'Original dough v2 copy',
-      formula: editedFormula,
+      formula: expect.objectContaining({
+        hydrationPercent: 68,
+        doughMethod: 'POOLISH',
+        fermentationPreset: 'ROOM_24H',
+        prefermentFlourPercent: 30,
+      }),
     })
     expect((await screen.findAllByText('Original dough v2 copy')).length).toBeGreaterThan(0)
     await waitFor(() => {
-      expect(screen.getByTestId('current-formula').textContent).toBe(JSON.stringify(editedFormula))
+      expect(readCurrentFormula()).toEqual({ ...editedFormula, fermentationSchedule: null })
     })
-    expect(calculateDough).toHaveBeenNthCalledWith(1, originalFormula)
-    expect(calculateDough).toHaveBeenNthCalledWith(2, editedFormula)
     expect(calculateDough).toHaveBeenNthCalledWith(3, editedFormula)
   })
 })
 
+function readCurrentFormula() {
+  return JSON.parse(screen.getByTestId('current-formula').textContent ?? 'null')
+}
+
 function RecipeManagerHarness() {
-  const [formula, setFormula] = useState<DoughCalculationRequest>({
+  const [form, setForm] = useState<FormState>({
     pizzaCount: 2,
     doughBallWeightGrams: 230,
     hydrationPercent: 62,
@@ -164,16 +206,62 @@ function RecipeManagerHarness() {
     yeastType: 'ACTIVE_DRY',
     doughMethod: 'DIRECT',
     fermentationPreset: 'COLD_24H',
+    fermentationSchedule: null,
+    roomTemperatureCelsius: 20,
     coldTemperatureCelsius: 4,
+    prefermentFlourPercent: 30,
   })
+  const compatiblePresets = useMemo(
+    () =>
+      defaultMetadata.fermentationPresets.filter((preset) =>
+        preset.compatibleDoughMethods.includes(form.doughMethod),
+      ),
+    [form.doughMethod],
+  )
+  const selectedPreset =
+    form.fermentationSchedule
+      ? undefined
+      : compatiblePresets.find((preset) => preset.code === form.fermentationPreset) ??
+        compatiblePresets[0]
+  const formula = buildCalculationRequest(form, selectedPreset)
 
   return (
     <>
-      <button type="button" onClick={() => setFormula(editedFormula)}>
-        Apply variant formula
-      </button>
       <output data-testid="current-formula">{JSON.stringify(formula)}</output>
-      <RecipeManager formula={formula} onLoadRecipe={setFormula} />
+      <RecipeManager
+        metadata={defaultMetadata}
+        form={form}
+        setForm={setForm}
+        compatiblePresets={compatiblePresets}
+        selectedPreset={selectedPreset}
+        calculationError={null}
+        formula={formula}
+        onLoadRecipe={(loadedFormula) =>
+          setForm((current) => ({
+            ...current,
+            pizzaCount: loadedFormula.pizzaCount,
+            doughBallWeightGrams: loadedFormula.doughBallWeightGrams,
+            hydrationPercent: loadedFormula.hydrationPercent,
+            saltPercent: loadedFormula.saltPercent,
+            yeastType: loadedFormula.yeastType,
+            doughMethod: loadedFormula.doughMethod,
+            fermentationPreset: loadedFormula.fermentationSchedule
+              ? null
+              : loadedFormula.fermentationPreset ?? current.fermentationPreset,
+            fermentationSchedule: loadedFormula.fermentationSchedule ?? null,
+            roomTemperatureCelsius:
+              loadedFormula.roomTemperatureCelsius ??
+              loadedFormula.fermentationSchedule?.roomTemperatureCelsius ??
+              current.roomTemperatureCelsius,
+            coldTemperatureCelsius:
+              loadedFormula.coldTemperatureCelsius ??
+              loadedFormula.fermentationSchedule?.coldTemperatureCelsius ??
+              current.coldTemperatureCelsius,
+            prefermentFlourPercent:
+              loadedFormula.prefermentFlourPercent ?? current.prefermentFlourPercent,
+          }))
+        }
+      />
     </>
   )
 }

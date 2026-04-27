@@ -73,7 +73,16 @@ function App() {
           <ResultsPanel result={result} />
         </section>
 
-        <RecipeManager formula={currentFormula} onLoadRecipe={loadRecipe} />
+        <RecipeManager
+          metadata={metadata}
+          form={form}
+          setForm={setForm}
+          compatiblePresets={compatiblePresets}
+          selectedPreset={selectedPreset}
+          calculationError={error}
+          formula={currentFormula}
+          onLoadRecipe={loadRecipe}
+        />
       </section>
     </main>
   )
