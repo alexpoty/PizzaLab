@@ -12,11 +12,8 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.UUID
 
-/**
- * Converts API recipe input into the relational shape stored by Spring Data JDBC.
- */
 fun CreateRecipeRequest.toRecord(): RecipeRecord {
-    return toRecord(
+    return toRecipeRecord(
         recipeId = UUID.randomUUID(),
         createdAt = OffsetDateTime.now(ZoneOffset.UTC),
         isNew = true,
@@ -24,34 +21,35 @@ fun CreateRecipeRequest.toRecord(): RecipeRecord {
 }
 
 fun CreateRecipeRequest.toRecord(existingRecord: RecipeRecord): RecipeRecord {
-    return toRecord(
+    return toRecipeRecord(
         recipeId = existingRecord.id,
         createdAt = existingRecord.createdAt,
         isNew = false,
     )
 }
 
-/**
- * Converts stored rows back into the same formula contract used by the calculator API.
- */
 fun RecipeRecord.toResponse(): RecipeResponse {
     return RecipeResponse(
         id = id,
         name = name,
-        formula = DoughCalculationRequest(
-            pizzaCount = pizzaCount,
-            doughBallWeightGrams = doughBallWeightGrams.toDouble(),
-            hydrationPercent = hydrationPercent.toDouble(),
-            saltPercent = saltPercent.toDouble(),
-            yeastType = YeastType.valueOf(yeastType),
-            doughMethod = DoughMethod.valueOf(doughMethod),
-            fermentationSchedule = toFermentationScheduleRequest(),
-            fermentationPreset = fermentationPreset?.let { FermentationPreset.valueOf(it) },
-            roomTemperatureCelsius = roomTemperatureCelsius?.toDouble(),
-            coldTemperatureCelsius = coldTemperatureCelsius?.toDouble(),
-            prefermentFlourPercent = prefermentFlourPercent?.toDouble(),
-        ),
+        formula = toFormulaRequest(),
         createdAt = createdAt.toInstant(),
+    )
+}
+
+private fun RecipeRecord.toFormulaRequest(): DoughCalculationRequest {
+    return DoughCalculationRequest(
+        pizzaCount = pizzaCount,
+        doughBallWeightGrams = doughBallWeightGrams.toDouble(),
+        hydrationPercent = hydrationPercent.toDouble(),
+        saltPercent = saltPercent.toDouble(),
+        yeastType = YeastType.valueOf(yeastType),
+        doughMethod = DoughMethod.valueOf(doughMethod),
+        fermentationSchedule = toFermentationScheduleRequest(),
+        fermentationPreset = fermentationPreset?.let { FermentationPreset.valueOf(it) },
+        roomTemperatureCelsius = roomTemperatureCelsius?.toDouble(),
+        coldTemperatureCelsius = coldTemperatureCelsius?.toDouble(),
+        prefermentFlourPercent = prefermentFlourPercent?.toDouble(),
     )
 }
 
@@ -67,7 +65,7 @@ private fun RecipeRecord.toFermentationScheduleRequest(): FermentationScheduleRe
     )
 }
 
-private fun CreateRecipeRequest.toRecord(
+private fun CreateRecipeRequest.toRecipeRecord(
     recipeId: UUID,
     createdAt: OffsetDateTime,
     isNew: Boolean,
@@ -87,6 +85,8 @@ private fun CreateRecipeRequest.toRecord(
         fermentationScheduleMode = formula.fermentationSchedule?.mode?.name,
         fermentationScheduleRoomHours = formula.fermentationSchedule?.roomHours?.toBigDecimal(),
         fermentationScheduleColdHours = formula.fermentationSchedule?.coldHours?.toBigDecimal(),
+        // The schedule stores its own temperatures because manual schedules can diverge
+        // from the top-level preset-driven temperatures.
         fermentationScheduleRoomTemperatureCelsius = formula.fermentationSchedule?.roomTemperatureCelsius?.toBigDecimal(),
         fermentationScheduleColdTemperatureCelsius = formula.fermentationSchedule?.coldTemperatureCelsius?.toBigDecimal(),
         roomTemperatureCelsius = formula.roomTemperatureCelsius?.toBigDecimal(),

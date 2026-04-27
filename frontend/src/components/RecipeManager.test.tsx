@@ -13,6 +13,7 @@ import type {
   FormState,
 } from '../types/dough'
 import type { Recipe } from '../types/recipe'
+import { applyRecipeFormulaToForm } from '../utils/recipeForm'
 import {
   createRecipe,
   deleteRecipe,
@@ -237,29 +238,7 @@ function RecipeManagerHarness() {
         calculationError={null}
         formula={formula}
         onLoadRecipe={(loadedFormula) =>
-          setForm((current) => ({
-            ...current,
-            pizzaCount: loadedFormula.pizzaCount,
-            doughBallWeightGrams: loadedFormula.doughBallWeightGrams,
-            hydrationPercent: loadedFormula.hydrationPercent,
-            saltPercent: loadedFormula.saltPercent,
-            yeastType: loadedFormula.yeastType,
-            doughMethod: loadedFormula.doughMethod,
-            fermentationPreset: loadedFormula.fermentationSchedule
-              ? null
-              : loadedFormula.fermentationPreset ?? current.fermentationPreset,
-            fermentationSchedule: loadedFormula.fermentationSchedule ?? null,
-            roomTemperatureCelsius:
-              loadedFormula.roomTemperatureCelsius ??
-              loadedFormula.fermentationSchedule?.roomTemperatureCelsius ??
-              current.roomTemperatureCelsius,
-            coldTemperatureCelsius:
-              loadedFormula.coldTemperatureCelsius ??
-              loadedFormula.fermentationSchedule?.coldTemperatureCelsius ??
-              current.coldTemperatureCelsius,
-            prefermentFlourPercent:
-              loadedFormula.prefermentFlourPercent ?? current.prefermentFlourPercent,
-          }))
+          setForm((current) => applyRecipeFormulaToForm(current, loadedFormula))
         }
       />
     </>

@@ -28,24 +28,7 @@ class RecipeControllerTest(
 
     @Test
     fun `creates and lists saved recipes`() {
-        mockMvc.post("/api/recipes") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """
-                {
-                  "name": "24h direct dough",
-                  "formula": {
-                    "pizzaCount": 4,
-                    "doughBallWeightGrams": 250,
-                    "hydrationPercent": 65,
-                    "saltPercent": 2.8,
-                    "yeastType": "INSTANT",
-                    "doughMethod": "DIRECT",
-                    "fermentationPreset": "ROOM_24H",
-                    "roomTemperatureCelsius": 20
-                  }
-                }
-            """.trimIndent()
-        }
+        mockMvc.createRecipe(directRecipePayload(name = "24h direct dough"))
             .andExpect {
                 status { isOk() }
                 jsonPath("$.id") { exists() }
@@ -72,30 +55,7 @@ class RecipeControllerTest(
 
     @Test
     fun `saves manual fermentation schedule fields`() {
-        mockMvc.post("/api/recipes") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """
-                {
-                  "name": "Poolish mixed schedule",
-                  "formula": {
-                    "pizzaCount": 4,
-                    "doughBallWeightGrams": 250,
-                    "hydrationPercent": 65,
-                    "saltPercent": 2.8,
-                    "yeastType": "INSTANT",
-                    "doughMethod": "POOLISH",
-                    "prefermentFlourPercent": 30,
-                    "fermentationSchedule": {
-                      "mode": "MIXED",
-                      "roomHours": 16,
-                      "roomTemperatureCelsius": 20,
-                      "coldHours": 24,
-                      "coldTemperatureCelsius": 4
-                    }
-                  }
-                }
-            """.trimIndent()
-        }
+        mockMvc.createRecipe(poolishSchedulePayload())
             .andExpect {
                 status { isOk() }
                 jsonPath("$.formula.doughMethod") { value("POOLISH") }
@@ -110,34 +70,24 @@ class RecipeControllerTest(
 
     @Test
     fun `deletes saved recipe`() {
-        val createResult = mockMvc.post("/api/recipes") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """
-                {
-                  "name": "Delete me",
-                  "formula": {
-                    "pizzaCount": 2,
-                    "doughBallWeightGrams": 260,
-                    "hydrationPercent": 62,
-                    "saltPercent": 3,
-                    "yeastType": "FRESH",
-                    "doughMethod": "DIRECT",
-                    "fermentationPreset": "COLD_24H",
-                    "coldTemperatureCelsius": 5
-                  }
-                }
-            """.trimIndent()
-        }
+        val createResult = mockMvc.createRecipe(
+            directRecipePayload(
+                name = "Delete me",
+                pizzaCount = 2,
+                doughBallWeightGrams = 260,
+                hydrationPercent = 62,
+                saltPercent = 3,
+                yeastType = "FRESH",
+                fermentationPreset = "COLD_24H",
+                temperatureField = "\"coldTemperatureCelsius\": 5",
+            ),
+        )
             .andExpect {
                 status { isOk() }
             }
             .andReturn()
 
-        val id = Regex(""""id":"([^"]+)"""")
-            .find(createResult.response.contentAsString)
-            ?.groupValues
-            ?.get(1)
-            ?: error("Recipe id was not returned")
+        val id = createResult.recipeId()
 
         mockMvc.delete("/api/recipes/$id")
             .andExpect {
@@ -153,59 +103,15 @@ class RecipeControllerTest(
 
     @Test
     fun `updates saved recipe`() {
-        val createResult = mockMvc.post("/api/recipes") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """
-                {
-                  "name": "Original dough",
-                  "formula": {
-                    "pizzaCount": 4,
-                    "doughBallWeightGrams": 250,
-                    "hydrationPercent": 65,
-                    "saltPercent": 2.8,
-                    "yeastType": "INSTANT",
-                    "doughMethod": "DIRECT",
-                    "fermentationPreset": "ROOM_24H",
-                    "roomTemperatureCelsius": 20
-                  }
-                }
-            """.trimIndent()
-        }
+        val createResult = mockMvc.createRecipe(directRecipePayload(name = "Original dough"))
             .andExpect {
                 status { isOk() }
             }
             .andReturn()
 
-        val id = Regex(""""id":"([^"]+)"""")
-            .find(createResult.response.contentAsString)
-            ?.groupValues
-            ?.get(1)
-            ?: error("Recipe id was not returned")
+        val id = createResult.recipeId()
 
-        mockMvc.put("/api/recipes/$id") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """
-                {
-                  "name": "Original dough v2",
-                  "formula": {
-                    "pizzaCount": 6,
-                    "doughBallWeightGrams": 270,
-                    "hydrationPercent": 68,
-                    "saltPercent": 2.6,
-                    "yeastType": "FRESH",
-                    "doughMethod": "POOLISH",
-                    "prefermentFlourPercent": 35,
-                    "fermentationSchedule": {
-                      "mode": "MIXED",
-                      "roomHours": 18,
-                      "roomTemperatureCelsius": 21,
-                      "coldHours": 24,
-                      "coldTemperatureCelsius": 4
-                    }
-                  }
-                }
-            """.trimIndent()
-        }
+        mockMvc.updateRecipe(id, updatedPoolishPayload())
             .andExpect {
                 status { isOk() }
                 jsonPath("$.id") { value(id) }
@@ -236,24 +142,7 @@ class RecipeControllerTest(
 
     @Test
     fun `returns not found when updating missing recipe`() {
-        mockMvc.put("/api/recipes/${UUID.randomUUID()}") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """
-                {
-                  "name": "Missing recipe",
-                  "formula": {
-                    "pizzaCount": 4,
-                    "doughBallWeightGrams": 250,
-                    "hydrationPercent": 65,
-                    "saltPercent": 2.8,
-                    "yeastType": "INSTANT",
-                    "doughMethod": "DIRECT",
-                    "fermentationPreset": "ROOM_24H",
-                    "roomTemperatureCelsius": 20
-                  }
-                }
-            """.trimIndent()
-        }
+        mockMvc.updateRecipe(UUID.randomUUID().toString(), directRecipePayload(name = "Missing recipe"))
             .andExpect {
                 status { isNotFound() }
             }
@@ -261,21 +150,7 @@ class RecipeControllerTest(
 
     @Test
     fun `returns validation error for invalid recipe payload`() {
-        mockMvc.post("/api/recipes") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """
-                {
-                  "name": "",
-                  "formula": {
-                    "pizzaCount": 0,
-                    "doughBallWeightGrams": 250,
-                    "hydrationPercent": 65,
-                    "saltPercent": 2.8,
-                    "yeastType": "INSTANT"
-                  }
-                }
-            """.trimIndent()
-        }
+        mockMvc.createRecipe(invalidRecipePayload())
             .andExpect {
                 status { isBadRequest() }
                 jsonPath("$.message") { exists() }
@@ -286,24 +161,7 @@ class RecipeControllerTest(
     fun `returns validation error when recipe name exceeds database limit`() {
         val recipeName = "a".repeat(121)
 
-        mockMvc.post("/api/recipes") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """
-                {
-                  "name": "$recipeName",
-                  "formula": {
-                    "pizzaCount": 4,
-                    "doughBallWeightGrams": 250,
-                    "hydrationPercent": 65,
-                    "saltPercent": 2.8,
-                    "yeastType": "INSTANT",
-                    "doughMethod": "DIRECT",
-                    "fermentationPreset": "ROOM_24H",
-                    "roomTemperatureCelsius": 20
-                  }
-                }
-            """.trimIndent()
-        }
+        mockMvc.createRecipe(directRecipePayload(name = recipeName))
             .andExpect {
                 status { isBadRequest() }
                 jsonPath("$.message") { exists() }
@@ -312,22 +170,7 @@ class RecipeControllerTest(
 
     @Test
     fun `returns validation error when recipe formula has no fermentation source`() {
-        mockMvc.post("/api/recipes") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """
-                {
-                  "name": "Missing fermentation",
-                  "formula": {
-                    "pizzaCount": 4,
-                    "doughBallWeightGrams": 250,
-                    "hydrationPercent": 65,
-                    "saltPercent": 2.8,
-                    "yeastType": "INSTANT",
-                    "doughMethod": "DIRECT"
-                  }
-                }
-            """.trimIndent()
-        }
+        mockMvc.createRecipe(missingFermentationPayload())
             .andExpect {
                 status { isBadRequest() }
                 jsonPath("$.message") {
@@ -344,24 +187,7 @@ class RecipeControllerTest(
 
     @Test
     fun `persists large numeric formula values accepted by api validation`() {
-        mockMvc.post("/api/recipes") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """
-                {
-                  "name": "Large formula values",
-                  "formula": {
-                    "pizzaCount": 100000,
-                    "doughBallWeightGrams": 1000000000,
-                    "hydrationPercent": 12345.67,
-                    "saltPercent": 123.45,
-                    "yeastType": "INSTANT",
-                    "doughMethod": "DIRECT",
-                    "fermentationPreset": "ROOM_24H",
-                    "roomTemperatureCelsius": 123.45
-                  }
-                }
-            """.trimIndent()
-        }
+        mockMvc.createRecipe(largeFormulaPayload())
             .andExpect {
                 status { isOk() }
                 jsonPath("$.formula.pizzaCount") { value(100000) }
@@ -372,3 +198,133 @@ class RecipeControllerTest(
             }
     }
 }
+
+private fun MockMvc.createRecipe(content: String) = post("/api/recipes") {
+    contentType = MediaType.APPLICATION_JSON
+    this.content = content
+}
+
+private fun MockMvc.updateRecipe(id: String, content: String) = put("/api/recipes/$id") {
+    contentType = MediaType.APPLICATION_JSON
+    this.content = content
+}
+
+private fun org.springframework.test.web.servlet.MvcResult.recipeId(): String {
+    return Regex(""""id":"([^"]+)"""")
+        .find(response.contentAsString)
+        ?.groupValues
+        ?.get(1)
+        ?: error("Recipe id was not returned")
+}
+
+private fun directRecipePayload(
+    name: String,
+    pizzaCount: Int = 4,
+    doughBallWeightGrams: Int = 250,
+    hydrationPercent: Int = 65,
+    saltPercent: Number = 2.8,
+    yeastType: String = "INSTANT",
+    fermentationPreset: String = "ROOM_24H",
+    temperatureField: String = "\"roomTemperatureCelsius\": 20",
+): String = """
+    {
+      "name": "$name",
+      "formula": {
+        "pizzaCount": $pizzaCount,
+        "doughBallWeightGrams": $doughBallWeightGrams,
+        "hydrationPercent": $hydrationPercent,
+        "saltPercent": $saltPercent,
+        "yeastType": "$yeastType",
+        "doughMethod": "DIRECT",
+        "fermentationPreset": "$fermentationPreset",
+        $temperatureField
+      }
+    }
+""".trimIndent()
+
+private fun poolishSchedulePayload(): String = """
+    {
+      "name": "Poolish mixed schedule",
+      "formula": {
+        "pizzaCount": 4,
+        "doughBallWeightGrams": 250,
+        "hydrationPercent": 65,
+        "saltPercent": 2.8,
+        "yeastType": "INSTANT",
+        "doughMethod": "POOLISH",
+        "prefermentFlourPercent": 30,
+        "fermentationSchedule": {
+          "mode": "MIXED",
+          "roomHours": 16,
+          "roomTemperatureCelsius": 20,
+          "coldHours": 24,
+          "coldTemperatureCelsius": 4
+        }
+      }
+    }
+""".trimIndent()
+
+private fun updatedPoolishPayload(): String = """
+    {
+      "name": "Original dough v2",
+      "formula": {
+        "pizzaCount": 6,
+        "doughBallWeightGrams": 270,
+        "hydrationPercent": 68,
+        "saltPercent": 2.6,
+        "yeastType": "FRESH",
+        "doughMethod": "POOLISH",
+        "prefermentFlourPercent": 35,
+        "fermentationSchedule": {
+          "mode": "MIXED",
+          "roomHours": 18,
+          "roomTemperatureCelsius": 21,
+          "coldHours": 24,
+          "coldTemperatureCelsius": 4
+        }
+      }
+    }
+""".trimIndent()
+
+private fun invalidRecipePayload(): String = """
+    {
+      "name": "",
+      "formula": {
+        "pizzaCount": 0,
+        "doughBallWeightGrams": 250,
+        "hydrationPercent": 65,
+        "saltPercent": 2.8,
+        "yeastType": "INSTANT"
+      }
+    }
+""".trimIndent()
+
+private fun missingFermentationPayload(): String = """
+    {
+      "name": "Missing fermentation",
+      "formula": {
+        "pizzaCount": 4,
+        "doughBallWeightGrams": 250,
+        "hydrationPercent": 65,
+        "saltPercent": 2.8,
+        "yeastType": "INSTANT",
+        "doughMethod": "DIRECT"
+      }
+    }
+""".trimIndent()
+
+private fun largeFormulaPayload(): String = """
+    {
+      "name": "Large formula values",
+      "formula": {
+        "pizzaCount": 100000,
+        "doughBallWeightGrams": 1000000000,
+        "hydrationPercent": 12345.67,
+        "saltPercent": 123.45,
+        "yeastType": "INSTANT",
+        "doughMethod": "DIRECT",
+        "fermentationPreset": "ROOM_24H",
+        "roomTemperatureCelsius": 123.45
+      }
+    }
+""".trimIndent()

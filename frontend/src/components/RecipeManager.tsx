@@ -51,20 +51,14 @@ export function RecipeManager({
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // While the modal is in edit or duplicate mode, keep the preview card in sync
+  // with the draft name and formula the user is currently adjusting.
   const modalRecipe = useMemo(() => {
     if (!preview) {
       return null
     }
 
-    if (modalMode === 'view') {
-      return preview.recipe
-    }
-
-    return {
-      ...preview.recipe,
-      name: modalRecipeName.trim() || preview.recipe.name,
-      formula,
-    }
+    return buildModalRecipe(preview.recipe, modalMode, modalRecipeName, formula)
   }, [formula, modalMode, modalRecipeName, preview])
 
   useEffect(() => {
@@ -236,11 +230,7 @@ export function RecipeManager({
     try {
       const result = await calculateDough(formula)
       setPreview({
-        recipe: {
-          ...preview.recipe,
-          name: modalRecipeName.trim() || preview.recipe.name,
-          formula,
-        },
+        recipe: buildModalRecipe(preview.recipe, modalMode, modalRecipeName, formula),
         result,
       })
     } catch (caught) {
@@ -325,6 +315,23 @@ export function RecipeManager({
     setModalRecipeName('')
     setSourceRecipeName(null)
     setError(null)
+  }
+}
+
+function buildModalRecipe(
+  recipe: Recipe,
+  mode: ModalMode,
+  recipeName: string,
+  formula: DoughCalculationRequest,
+) {
+  if (mode === 'view') {
+    return recipe
+  }
+
+  return {
+    ...recipe,
+    name: recipeName.trim() || recipe.name,
+    formula,
   }
 }
 
