@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
@@ -20,25 +21,21 @@ import java.util.UUID
 class RecipeController(
     private val recipeManagement: RecipeManagementUseCase,
 ) {
-    /**
-     * HTTP adapter for saving the current calculator input under a user-provided name.
-     */
     @PostMapping
     fun create(@Valid @RequestBody request: CreateRecipeRequest): RecipeResponse {
         return recipeManagement.create(request)
     }
 
-    /**
-     * Returns saved recipes newest-first so recent formulas stay easy to reuse.
-     */
+    @PutMapping("/{id}")
+    fun update(@PathVariable id: UUID, @Valid @RequestBody request: CreateRecipeRequest): RecipeResponse {
+        return recipeManagement.update(id, request)
+    }
+
     @GetMapping
     fun list(): List<RecipeResponse> {
         return recipeManagement.list()
     }
 
-    /**
-     * Deletes a recipe by id. Deleting an already-missing id is intentionally idempotent.
-     */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun delete(@PathVariable id: UUID) {

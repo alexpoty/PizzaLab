@@ -18,6 +18,8 @@ type DoughFormProps = {
   error: string | null
   isLoading: boolean
   onSubmit: () => void
+  submitLabel?: string
+  className?: string
 }
 
 export function DoughForm({
@@ -29,10 +31,12 @@ export function DoughForm({
   error,
   isLoading,
   onSubmit,
+  submitLabel = 'Calculate dough',
+  className = 'control-panel',
 }: DoughFormProps) {
   return (
     <form
-      className="control-panel"
+      className={className}
       onSubmit={(event) => {
         event.preventDefault()
         void onSubmit()
@@ -177,7 +181,7 @@ export function DoughForm({
 
       {error && <p className="error-message">{error}</p>}
       <button className="calculate-button" type="submit" disabled={isLoading}>
-        {isLoading ? 'Calculating...' : 'Calculate dough'}
+        {isLoading ? 'Calculating...' : submitLabel}
       </button>
     </form>
   )

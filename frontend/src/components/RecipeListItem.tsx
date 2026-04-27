@@ -2,15 +2,46 @@ import type { Recipe } from '../types/recipe'
 
 type RecipeListItemProps = {
   recipe: Recipe
+  isActive: boolean
   isDisabled: boolean
-  onOpen: (recipe: Recipe) => void
+  onSelect: (recipe: Recipe) => void
   onDelete: (recipeId: string) => void
 }
 
-export function RecipeListItem({ recipe, isDisabled, onOpen, onDelete }: RecipeListItemProps) {
+export function RecipeListItem({
+  recipe,
+  isActive,
+  isDisabled,
+  onSelect,
+  onDelete,
+}: RecipeListItemProps) {
   return (
-    <article className="recipe-item">
-      <div>
+    <article
+      className={`recipe-item${isActive ? ' active' : ''}${isDisabled ? ' disabled' : ''}`}
+      role="button"
+      tabIndex={isDisabled ? -1 : 0}
+      aria-pressed={isActive}
+      onClick={() => {
+        if (!isDisabled) {
+          onSelect(recipe)
+        }
+      }}
+      onKeyDown={(event) => {
+        if (isDisabled) {
+          return
+        }
+
+        if (event.currentTarget !== event.target) {
+          return
+        }
+
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onSelect(recipe)
+        }
+      }}
+    >
+      <div className="recipe-item-body">
         <h3>{recipe.name}</h3>
         <p>
           {recipe.formula.doughMethod.toLowerCase()} · {recipe.formula.hydrationPercent}%
@@ -18,12 +49,12 @@ export function RecipeListItem({ recipe, isDisabled, onOpen, onDelete }: RecipeL
         </p>
       </div>
       <div className="recipe-actions">
-        <button type="button" onClick={() => onOpen(recipe)} disabled={isDisabled}>
-          Open
-        </button>
         <button
           type="button"
-          onClick={() => onDelete(recipe.id)}
+          onClick={(event) => {
+            event.stopPropagation()
+            onDelete(recipe.id)
+          }}
           disabled={isDisabled}
           aria-label={`Delete ${recipe.name}`}
         >

@@ -293,11 +293,44 @@ h1 {
 }
 
 .recipe-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   min-height: 68px;
   padding: 12px 14px;
   border: 1px solid #e0e4d8;
   border-radius: 8px;
   background: #fbfcf8;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    transform 120ms ease;
+}
+
+.recipe-item:hover {
+  border-color: #c8cfbb;
+  box-shadow: 0 12px 28px rgba(36, 41, 34, 0.08);
+  transform: translateY(-1px);
+}
+
+.recipe-item.active {
+  border-color: #8f3528;
+  box-shadow: 0 0 0 1px rgba(143, 53, 40, 0.16);
+}
+
+.recipe-item.disabled {
+  cursor: wait;
+}
+
+.recipe-item:focus-visible {
+  outline: 2px solid #8f3528;
+  outline-offset: 2px;
+}
+
+.recipe-item-body {
+  min-width: 0;
 }
 
 .recipe-actions,
@@ -386,6 +419,80 @@ h1 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+}
+
+.recipe-modal-form {
+  display: grid;
+  gap: 18px;
+  margin-bottom: 16px;
+  padding: 18px;
+  border: 1px solid #e0e4d8;
+  border-radius: 8px;
+  background: #fbfcf8;
+}
+
+.recipe-modal-toolbar {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.recipe-modal-toolbar > button,
+.recipe-modal-action-row button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 6px;
+  background: #8f3528;
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.recipe-modal-toolbar > button:nth-child(2),
+.recipe-modal-action-row button:last-child {
+  background: #f2f4ec;
+  color: #8f3528;
+}
+
+.recipe-modal-toolbar > button:last-child {
+  background: #fde8e3;
+  color: #9b2c20;
+}
+
+.recipe-modal-name-field {
+  display: grid;
+  gap: 7px;
+  color: #5f685d;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.recipe-modal-name-field input {
+  min-height: 44px;
+  min-width: 0;
+  padding: 0 10px;
+  border: 1px solid #d9ddcf;
+  border-radius: 6px;
+  background: #fbfcf8;
+  color: #1f2520;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  outline: 0;
+}
+
+.recipe-modal-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.recipe-modal-hint {
+  margin: 0 0 16px;
+  color: #5f685d;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .recipe-summary-block {
