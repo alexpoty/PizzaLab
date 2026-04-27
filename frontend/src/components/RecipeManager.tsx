@@ -50,7 +50,8 @@ export function RecipeManager({
   const [modalRecipeName, setModalRecipeName] = useState('')
   const [sourceRecipeName, setSourceRecipeName] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [panelError, setPanelError] = useState<string | null>(null)
+  const [modalError, setModalError] = useState<string | null>(null)
 
   // While the modal is in edit or duplicate mode, keep the preview card in sync
   // with the draft name and formula the user is currently adjusting.
@@ -73,7 +74,7 @@ export function RecipeManager({
       })
       .catch((caught) => {
         if (isMounted) {
-          setError(caught instanceof Error ? caught.message : 'Recipes request failed')
+          setPanelError(caught instanceof Error ? caught.message : 'Recipes request failed')
         }
       })
 
@@ -88,12 +89,12 @@ export function RecipeManager({
     const name = newRecipeName.trim()
 
     if (!name) {
-      setError('Recipe name is required')
+      setPanelError('Recipe name is required')
       return
     }
 
     setIsLoading(true)
-    setError(null)
+    setPanelError(null)
 
     try {
       const savedRecipe = await createRecipe({ name, formula })
@@ -101,7 +102,7 @@ export function RecipeManager({
       setNewRecipeName('')
       await openRecipe(savedRecipe)
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Recipe save failed')
+      setPanelError(caught instanceof Error ? caught.message : 'Recipe save failed')
     } finally {
       setIsLoading(false)
     }
@@ -109,7 +110,7 @@ export function RecipeManager({
 
   const removeRecipe = async (id: string) => {
     setIsLoading(true)
-    setError(null)
+    setPanelError(null)
 
     try {
       await deleteRecipe(id)
@@ -123,7 +124,7 @@ export function RecipeManager({
         resetModal()
       }
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Recipe delete failed')
+      setPanelError(caught instanceof Error ? caught.message : 'Recipe delete failed')
     } finally {
       setIsLoading(false)
     }
@@ -131,20 +132,21 @@ export function RecipeManager({
 
   const showRecipe = async (recipe: Recipe) => {
     setIsLoading(true)
-    setError(null)
+    setPanelError(null)
 
     try {
       const result = await calculateDough(recipe.formula)
       setPreview({ recipe, result })
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Recipe calculation failed')
+      setPanelError(caught instanceof Error ? caught.message : 'Recipe calculation failed')
     } finally {
       setIsLoading(false)
     }
   }
 
   const openRecipe = async (recipe: Recipe) => {
-    setError(null)
+    setPanelError(null)
+    setModalError(null)
     setLoadedRecipe(recipe)
     setActiveRecipeId(recipe.id)
     setModalMode('view')
@@ -159,7 +161,7 @@ export function RecipeManager({
       return
     }
 
-    setError(null)
+    setModalError(null)
     setModalMode('edit')
     setModalRecipeName(loadedRecipe.name)
     setSourceRecipeName(null)
@@ -174,7 +176,7 @@ export function RecipeManager({
 
     const duplicateName = buildDuplicateRecipeName(loadedRecipe.name, recipes)
 
-    setError(null)
+    setModalError(null)
     setModalMode('duplicate')
     setSourceRecipeName(loadedRecipe.name)
     setModalRecipeName(duplicateName)
@@ -189,12 +191,12 @@ export function RecipeManager({
     const name = modalRecipeName.trim()
 
     if (!name) {
-      setError('Recipe name is required')
+      setModalError('Recipe name is required')
       return
     }
 
     setIsLoading(true)
-    setError(null)
+    setModalError(null)
 
     try {
       const savedRecipe =
@@ -209,7 +211,7 @@ export function RecipeManager({
       )
       await openRecipe(savedRecipe)
     } catch (caught) {
-      setError(
+      setModalError(
         caught instanceof Error
           ? caught.message
           : modalMode === 'duplicate'
@@ -227,7 +229,7 @@ export function RecipeManager({
     }
 
     setIsLoading(true)
-    setError(null)
+    setModalError(null)
 
     try {
       const result = await calculateDough(formula)
@@ -236,7 +238,7 @@ export function RecipeManager({
         result,
       })
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Recipe calculation failed')
+      setModalError(caught instanceof Error ? caught.message : 'Recipe calculation failed')
     } finally {
       setIsLoading(false)
     }
@@ -266,7 +268,7 @@ export function RecipeManager({
         </button>
       </div>
 
-      {error && <p className="error-message">{error}</p>}
+      {panelError && <p className="error-message">{panelError}</p>}
 
       <div className="recipe-list">
         {recipes.length === 0 ? (
@@ -298,7 +300,7 @@ export function RecipeManager({
           setForm={setForm}
           compatiblePresets={compatiblePresets}
           selectedPreset={selectedPreset}
-          formError={calculationError}
+          formError={modalError ?? calculationError}
           onChangeName={setModalRecipeName}
           onEdit={startEditingRecipe}
           onDuplicate={startDuplicateRecipe}
@@ -321,7 +323,7 @@ export function RecipeManager({
     setModalMode('view')
     setModalRecipeName('')
     setSourceRecipeName(null)
-    setError(null)
+    setModalError(null)
   }
 }
 

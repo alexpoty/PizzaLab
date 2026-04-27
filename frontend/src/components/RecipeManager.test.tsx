@@ -275,6 +275,53 @@ describe('RecipeManager', () => {
     expect(calculateDough).not.toHaveBeenCalled()
     expect(screen.queryByRole('dialog')).toBeNull()
   })
+
+  it('shows preview failures inside the modal form', async () => {
+    const recipe: Recipe = {
+      id: 'recipe-1',
+      name: 'Preview failure',
+      formula: originalFormula,
+      createdAt: '2026-04-27T00:00:00Z',
+    }
+
+    vi.mocked(fetchRecipes).mockResolvedValue([recipe])
+    vi.mocked(deleteRecipe).mockResolvedValue(undefined)
+    vi.mocked(calculateDough)
+      .mockResolvedValueOnce(calculationResult)
+      .mockRejectedValueOnce(new Error('Preview failed'))
+
+    render(<RecipeManagerHarness />)
+
+    await userEvent.click(await screen.findByText('Preview failure'))
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit recipe' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Preview dough' }))
+
+    expect(await screen.findByText('Preview failed')).toBeTruthy()
+    expect(screen.getByRole('dialog')).toBeTruthy()
+  })
+
+  it('shows save failures inside the modal form', async () => {
+    const recipe: Recipe = {
+      id: 'recipe-1',
+      name: 'Save failure',
+      formula: originalFormula,
+      createdAt: '2026-04-27T00:00:00Z',
+    }
+
+    vi.mocked(fetchRecipes).mockResolvedValue([recipe])
+    vi.mocked(deleteRecipe).mockResolvedValue(undefined)
+    vi.mocked(calculateDough).mockResolvedValue(calculationResult)
+    vi.mocked(updateRecipe).mockRejectedValue(new Error('Update failed'))
+
+    render(<RecipeManagerHarness />)
+
+    await userEvent.click(await screen.findByText('Save failure'))
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit recipe' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Update recipe' }))
+
+    expect(await screen.findByText('Update failed')).toBeTruthy()
+    expect(screen.getByRole('dialog')).toBeTruthy()
+  })
 })
 
 function readCurrentFormula() {
