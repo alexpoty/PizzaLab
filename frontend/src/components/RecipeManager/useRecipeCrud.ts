@@ -33,6 +33,10 @@ export function useRecipeCrud({ formula, onSavedRecipe }: UseRecipeCrudArgs) {
   const [isLoading, setIsLoading] = useState(false)
   const [panelError, setPanelError] = useState<string | null>(null)
 
+  const lockBootstrap = () => {
+    canApplyBootstrapRef.current = false
+  }
+
   useEffect(() => {
     let isMounted = true
 
@@ -63,10 +67,10 @@ export function useRecipeCrud({ formula, onSavedRecipe }: UseRecipeCrudArgs) {
 
     setIsLoading(true)
     setPanelError(null)
-    canApplyBootstrapRef.current = false
 
     try {
       const savedRecipe = await createRecipe({ name, formula })
+      lockBootstrap()
       setRecipes((currentRecipes) => [savedRecipe, ...currentRecipes])
       setNewRecipeName('')
       await onSavedRecipe(savedRecipe)
@@ -94,7 +98,6 @@ export function useRecipeCrud({ formula, onSavedRecipe }: UseRecipeCrudArgs) {
 
     setIsLoading(true)
     setModalError(null)
-    canApplyBootstrapRef.current = false
 
     try {
       const savedRecipe =
@@ -102,6 +105,7 @@ export function useRecipeCrud({ formula, onSavedRecipe }: UseRecipeCrudArgs) {
           ? await createRecipe({ name, formula })
           : await updateRecipe(recipeId, { name, formula })
 
+      lockBootstrap()
       setRecipes((currentRecipes) =>
         mode === 'duplicate'
           ? [savedRecipe, ...currentRecipes]
@@ -127,7 +131,6 @@ export function useRecipeCrud({ formula, onSavedRecipe }: UseRecipeCrudArgs) {
     setModalError,
   }: RemoveRecipeArgs) => {
     setIsLoading(true)
-    canApplyBootstrapRef.current = false
 
     if (errorTarget === 'panel') {
       setPanelError(null)
@@ -137,6 +140,7 @@ export function useRecipeCrud({ formula, onSavedRecipe }: UseRecipeCrudArgs) {
 
     try {
       await deleteRecipe(id)
+      lockBootstrap()
       setRecipes((currentRecipes) => currentRecipes.filter((recipe) => recipe.id !== id))
       onDeleted()
     } catch (caught) {

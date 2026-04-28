@@ -84,4 +84,44 @@ describe('useRecipeCrud', () => {
       expect(result.current.recipes).toEqual([newRecipe])
     })
   })
+
+  it('still applies the initial fetch when an early mutation fails', async () => {
+    const fetchedRecipe: Recipe = {
+      id: 'fetched-recipe',
+      name: 'Fetched recipe',
+      formula,
+      createdAt: '2026-04-27T00:00:00Z',
+    }
+    const deferredFetch = createDeferred<Recipe[]>()
+
+    vi.mocked(fetchRecipes).mockReturnValueOnce(deferredFetch.promise)
+    vi.mocked(createRecipe).mockRejectedValueOnce(new Error('Recipe save failed'))
+
+    const { result } = renderHook(() =>
+      useRecipeCrud({
+        formula,
+        onSavedRecipe: vi.fn().mockResolvedValue(undefined),
+      }),
+    )
+
+    act(() => {
+      result.current.setNewRecipeName('Failed recipe')
+    })
+
+    await act(async () => {
+      await result.current.saveNewRecipe()
+    })
+
+    expect(result.current.recipes).toEqual([])
+    expect(result.current.panelError).toBe('Recipe save failed')
+
+    await act(async () => {
+      deferredFetch.resolve([fetchedRecipe])
+      await deferredFetch.promise
+    })
+
+    await waitFor(() => {
+      expect(result.current.recipes).toEqual([fetchedRecipe])
+    })
+  })
 })
