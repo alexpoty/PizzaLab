@@ -38,10 +38,10 @@ function createDeferred<T>() {
 }
 
 describe('useRecipeCrud', () => {
-  it('does not let the initial fetch overwrite newer local recipe state', async () => {
-    const staleRecipe: Recipe = {
-      id: 'stale-recipe',
-      name: 'Stale recipe',
+  it('merges bootstrap recipes with newer local recipe state', async () => {
+    const existingRecipe: Recipe = {
+      id: 'existing-recipe',
+      name: 'Existing recipe',
       formula,
       createdAt: '2026-04-27T00:00:00Z',
     }
@@ -76,12 +76,12 @@ describe('useRecipeCrud', () => {
     expect(onSavedRecipe).toHaveBeenCalledWith(newRecipe)
 
     await act(async () => {
-      deferredFetch.resolve([staleRecipe])
+      deferredFetch.resolve([existingRecipe])
       await deferredFetch.promise
     })
 
     await waitFor(() => {
-      expect(result.current.recipes).toEqual([newRecipe])
+      expect(result.current.recipes).toEqual([newRecipe, existingRecipe])
     })
   })
 
