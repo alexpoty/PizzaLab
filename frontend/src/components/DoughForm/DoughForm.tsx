@@ -1,13 +1,14 @@
+import './DoughForm.scss'
 import type { Dispatch, SetStateAction } from 'react'
-import { methodLabels, yeastLabels } from '../data/doughDefaults'
+import { methodLabels, yeastLabels } from '../../data/doughDefaults'
 import type {
   DoughMetadata,
   FermentationPreset,
   FormState,
   PresetMetadata,
   YeastType,
-} from '../types/dough'
-import { NumberField } from './NumberField'
+} from '../../types/dough'
+import { NumberField } from '../NumberField'
 
 type DoughFormProps = {
   metadata: DoughMetadata

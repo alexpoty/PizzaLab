@@ -5,32 +5,32 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { RecipeManager } from './RecipeManager'
-import { buildCalculationRequest } from '../api/doughApi'
-import { defaultMetadata } from '../data/doughDefaults'
+import { buildCalculationRequest } from '../../api/doughApi'
+import { defaultMetadata } from '../../data/doughDefaults'
 import type {
   DoughCalculationRequest,
   DoughCalculationResponse,
   FormState,
-} from '../types/dough'
-import type { Recipe } from '../types/recipe'
-import { applyRecipeFormulaToForm } from '../utils/recipeForm'
+} from '../../types/dough'
+import type { Recipe } from '../../types/recipe'
+import { applyRecipeFormulaToForm } from '../../utils/recipeForm'
 import {
   createRecipe,
   deleteRecipe,
   fetchRecipes,
   updateRecipe,
-} from '../api/recipeApi'
-import { calculateDough } from '../api/doughApi'
+} from '../../api/recipeApi'
+import { calculateDough } from '../../api/doughApi'
 
-vi.mock('../api/recipeApi', () => ({
+vi.mock('../../api/recipeApi', () => ({
   fetchRecipes: vi.fn(),
   createRecipe: vi.fn(),
   updateRecipe: vi.fn(),
   deleteRecipe: vi.fn(),
 }))
 
-vi.mock('../api/doughApi', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../api/doughApi')>()
+vi.mock('../../api/doughApi', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../api/doughApi')>()
 
   return {
     ...actual,
@@ -86,6 +86,38 @@ const calculationResult: DoughCalculationResponse = {
     selectedYeastGrams: 0.4,
     prefermentYeastGrams: 0,
     finalMixYeastGrams: 0.4,
+  },
+}
+
+const prefermentCalculationResult: DoughCalculationResponse = {
+  flourGrams: 920,
+  waterGrams: 634.8,
+  saltGrams: 25.8,
+  yeastGrams: 2.4,
+  totalDoughWeightGrams: 1583,
+  preferment: {
+    flourGrams: 276,
+    waterGrams: 276,
+    yeastGrams: 1.2,
+  },
+  finalMix: {
+    flourGrams: 644,
+    waterGrams: 358.8,
+    saltGrams: 25.8,
+    yeastGrams: 1.2,
+  },
+  yeastCalculation: {
+    yeastType: 'INSTANT',
+    doughMethod: 'POOLISH',
+    roomEffectHours: 24,
+    coldEffectHours: 0,
+    effectiveFermentationHours: 24,
+    freshYeastPercent: 0.24,
+    selectedYeastPercent: 0.08,
+    freshYeastEquivalentGrams: 2.2,
+    selectedYeastGrams: 0.7,
+    prefermentYeastGrams: 0.35,
+    finalMixYeastGrams: 0.35,
   },
 }
 
@@ -192,6 +224,78 @@ describe('RecipeManager', () => {
       expect(readCurrentFormula()).toEqual({ ...editedFormula, fermentationSchedule: null })
     })
     expect(calculateDough).toHaveBeenNthCalledWith(3, editedFormula)
+  })
+
+  it('compares two saved recipes side by side, including preferment recipes', async () => {
+    const directRecipe: Recipe = {
+      id: 'recipe-1',
+      name: 'Direct dough',
+      formula: originalFormula,
+      createdAt: '2026-04-27T00:00:00Z',
+    }
+    const prefermentRecipe: Recipe = {
+      id: 'recipe-2',
+      name: 'Poolish dough',
+      formula: editedFormula,
+      createdAt: '2026-04-27T00:05:00Z',
+    }
+
+    vi.mocked(fetchRecipes).mockResolvedValue([directRecipe, prefermentRecipe])
+    vi.mocked(deleteRecipe).mockResolvedValue(undefined)
+    vi.mocked(calculateDough)
+      .mockResolvedValueOnce(calculationResult)
+      .mockResolvedValueOnce(prefermentCalculationResult)
+
+    render(<RecipeManagerHarness />)
+
+    expect(await screen.findByText('Direct dough')).toBeTruthy()
+    expect(screen.getByText('Poolish dough')).toBeTruthy()
+
+    const compareButtons = screen.getAllByRole('button', { name: 'Compare' })
+    await userEvent.click(compareButtons[0])
+    await userEvent.click(compareButtons[1])
+
+    expect(await screen.findByText('Recipe delta view')).toBeTruthy()
+    expect(
+      screen.getByText((_, element) =>
+        element?.textContent === 'Comparing Poolish dough against Direct dough.',
+      ),
+    ).toBeTruthy()
+    expect(screen.getByText('Flour')).toBeTruthy()
+    expect(screen.getByText('1000.0g')).toBeTruthy()
+    expect(screen.getByText('920.0g')).toBeTruthy()
+    expect(screen.getByText('-80.0g')).toBeTruthy()
+    expect(screen.getByText('-15.2g')).toBeTruthy()
+    expect(screen.getByText('+0.9g')).toBeTruthy()
+    expect(screen.getByText('poolish')).toBeTruthy()
+    expect(calculateDough).toHaveBeenNthCalledWith(1, originalFormula)
+    expect(calculateDough).toHaveBeenNthCalledWith(2, editedFormula)
+  })
+
+  it('shows preferment and final mix breakdown for saved preferment recipes', async () => {
+    const prefermentRecipe: Recipe = {
+      id: 'recipe-2',
+      name: 'Poolish dough',
+      formula: editedFormula,
+      createdAt: '2026-04-27T00:05:00Z',
+    }
+
+    vi.mocked(fetchRecipes).mockResolvedValue([prefermentRecipe])
+    vi.mocked(deleteRecipe).mockResolvedValue(undefined)
+    vi.mocked(calculateDough).mockResolvedValue(prefermentCalculationResult)
+
+    render(<RecipeManagerHarness />)
+
+    await userEvent.click(await screen.findByText('Poolish dough'))
+
+    expect(await screen.findByRole('dialog')).toBeTruthy()
+    expect(screen.getByText('Preferment')).toBeTruthy()
+    expect(screen.getByText('Final mix')).toBeTruthy()
+    expect(screen.getAllByText('Flour').length).toBeGreaterThan(1)
+    expect(screen.getByText('920.0g')).toBeTruthy()
+    expect(screen.getAllByText('276.0g').length).toBeGreaterThan(1)
+    expect(screen.getByText('358.8g')).toBeTruthy()
+    expect(screen.getAllByText('1.2g').length).toBeGreaterThan(0)
   })
 
   it('restores the loaded recipe formula when modal edits are canceled', async () => {

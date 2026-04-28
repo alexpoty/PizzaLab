@@ -1,0 +1,116 @@
+@use '../../styles/tokens' as *;
+
+.recipe-panel {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid $color-border-panel;
+  border-radius: $radius-md;
+  background: $color-surface-panel;
+  box-shadow: $shadow-panel;
+}
+
+.recipe-header,
+.recipe-save-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.recipe-header h2 {
+  color: $color-text-strong;
+  font-size: 28px;
+  line-height: 1.1;
+}
+
+.recipe-header span {
+  min-width: 44px;
+  min-height: 36px;
+  display: grid;
+  place-content: center;
+  border-radius: $radius-pill;
+  background: $color-surface-accent;
+  color: $color-brand-soft;
+  font-weight: 800;
+}
+
+.recipe-save-row label {
+  display: grid;
+  flex: 1;
+  gap: 7px;
+  color: $color-text-soft;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.recipe-save-row input {
+  min-height: 44px;
+  min-width: 0;
+  padding: 0 10px;
+  border: 1px solid $color-border-strong;
+  border-radius: $radius-sm;
+  background: $color-surface-card;
+  color: $color-text;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  outline: 0;
+}
+
+.recipe-save-row button {
+  min-width: 92px;
+  align-self: end;
+  min-height: 42px;
+  border: 0;
+  border-radius: $radius-sm;
+  background: $color-brand;
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.recipe-save-row button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.recipe-list {
+  display: grid;
+  gap: 10px;
+}
+
+.recipe-compare-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px dashed $color-border-emphasis;
+  border-radius: $radius-md;
+  background: $color-surface-info;
+}
+
+.recipe-compare-status button {
+  min-height: 38px;
+  border: 0;
+  border-radius: $radius-sm;
+  background: $color-surface-muted;
+  color: $color-brand;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+@media (max-width: $breakpoint-tablet) {
+  .recipe-save-row,
+  .recipe-compare-status {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .recipe-save-row button {
+    width: 100%;
+  }
+}

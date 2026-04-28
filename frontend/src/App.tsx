@@ -1,4 +1,4 @@
-import './App.css'
+import './App.scss'
 import type { DoughCalculationRequest, FormState } from './types/dough'
 import { DoughForm } from './components/DoughForm'
 import { RecipeManager } from './components/RecipeManager'
