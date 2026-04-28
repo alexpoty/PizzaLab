@@ -62,6 +62,18 @@ const calculationResult: DoughCalculationResponse = {
   },
 }
 
+function createDeferred<T>() {
+  let resolve!: (value: T) => void
+  let reject!: (reason?: unknown) => void
+
+  const promise = new Promise<T>((innerResolve, innerReject) => {
+    resolve = innerResolve
+    reject = innerReject
+  })
+
+  return { promise, resolve, reject }
+}
+
 describe('useRecipeModalState', () => {
   it('handles open, edit, preview, duplicate, save, and reset modal flow', async () => {
     const recipe: Recipe = {
@@ -171,5 +183,80 @@ describe('useRecipeModalState', () => {
     expect(result.current.modalRecipeName).toBe('')
     expect(result.current.sourceRecipeName).toBeNull()
     expect(onLoadRecipe).toHaveBeenLastCalledWith(duplicatedRecipe.formula)
+  })
+
+  it('ignores stale openRecipe responses and keeps the latest preview/save target', async () => {
+    const recipeA: Recipe = {
+      id: 'recipe-a',
+      name: 'Recipe A',
+      formula: baseFormula,
+      createdAt: '2026-04-27T00:00:00Z',
+    }
+    const recipeB: Recipe = {
+      id: 'recipe-b',
+      name: 'Recipe B',
+      formula: {
+        ...baseFormula,
+        hydrationPercent: 67,
+      },
+      createdAt: '2026-04-27T00:05:00Z',
+    }
+    const requestA = createDeferred<DoughCalculationResponse>()
+    const requestB = createDeferred<DoughCalculationResponse>()
+    const setIsLoading = vi.fn()
+    const setPanelError = vi.fn()
+    const persistModalRecipe = vi.fn().mockResolvedValue(undefined)
+    const onLoadRecipe = vi.fn()
+
+    vi.mocked(calculateDough)
+      .mockReturnValueOnce(requestA.promise)
+      .mockReturnValueOnce(requestB.promise)
+
+    const { result } = renderHook(() =>
+      useRecipeModalState({
+        formula: recipeB.formula,
+        recipes: [recipeA, recipeB],
+        setIsLoading,
+        setPanelError,
+        persistModalRecipe,
+        onLoadRecipe,
+      }),
+    )
+
+    const openRecipeAPromise = result.current.openRecipe(recipeA)
+    const openRecipeBPromise = result.current.openRecipe(recipeB)
+
+    await act(async () => {
+      requestB.resolve(calculationResult)
+      await requestB.promise
+      await openRecipeBPromise
+    })
+
+    await waitFor(() => {
+      expect(result.current.preview?.recipe.id).toBe('recipe-b')
+    })
+
+    await act(async () => {
+      requestA.resolve(calculationResult)
+      await requestA.promise
+      await openRecipeAPromise
+    })
+
+    expect(result.current.preview?.recipe.id).toBe('recipe-b')
+    expect(result.current.modalRecipeName).toBe('Recipe B')
+    expect(result.current.activeRecipeId).toBe('recipe-b')
+
+    await act(async () => {
+      await result.current.saveModalRecipe()
+    })
+
+    expect(persistModalRecipe).toHaveBeenCalledWith({
+      mode: 'view',
+      recipeId: 'recipe-b',
+      recipeName: 'Recipe B',
+      formula: recipeB.formula,
+      setModalError: expect.any(Function),
+      onSaved: expect.any(Function),
+    })
   })
 })

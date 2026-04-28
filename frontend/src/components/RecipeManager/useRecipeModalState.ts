@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { calculateDough } from '../../api/doughApi'
 import type { DoughCalculationRequest } from '../../types/dough'
 import type { Recipe } from '../../types/recipe'
@@ -35,6 +35,7 @@ export function useRecipeModalState({
   persistModalRecipe,
   onLoadRecipe,
 }: UseRecipeModalStateArgs) {
+  const activeRequestIdRef = useRef(0)
   const [loadedRecipe, setLoadedRecipe] = useState<Recipe | null>(null)
   const [preview, setPreview] = useState<RecipePreview | null>(null)
   const [activeRecipeId, setActiveRecipeId] = useState<string | null>(null)
@@ -108,27 +109,40 @@ export function useRecipeModalState({
       return
     }
 
+    const requestId = startRequest()
     setIsLoading(true)
     setModalError(null)
 
     try {
       const result = await calculateDough(formula)
+      if (!isLatestRequest(requestId)) {
+        return
+      }
+
       setPreview({
         recipe: buildModalRecipe(preview.recipe, modalMode, modalRecipeName, formula),
         result,
       })
     } catch (caught) {
+      if (!isLatestRequest(requestId)) {
+        return
+      }
+
       setPreview({
         recipe: buildModalRecipe(preview.recipe, modalMode, modalRecipeName, formula),
         result: null,
       })
       setModalError(getErrorMessage(caught, 'Recipe calculation failed'))
     } finally {
-      setIsLoading(false)
+      if (isLatestRequest(requestId)) {
+        setIsLoading(false)
+      }
     }
   }
 
   const resetModal = () => {
+    invalidateRequests()
+
     if (modalMode !== 'view' && loadedRecipe) {
       onLoadRecipe(loadedRecipe.formula)
     }
@@ -173,20 +187,44 @@ export function useRecipeModalState({
   }
 
   async function showRecipe(recipe: Recipe, errorTarget: ErrorTarget) {
+    const requestId = startRequest()
     setIsLoading(true)
     clearError(errorTarget)
 
     try {
       const result = await calculateDough(recipe.formula)
+      if (!isLatestRequest(requestId)) {
+        return false
+      }
+
       setPreview({ recipe, result })
       return true
     } catch (caught) {
+      if (!isLatestRequest(requestId)) {
+        return false
+      }
+
       setPreview({ recipe, result: null })
       setErrorMessage(errorTarget, getErrorMessage(caught, 'Recipe calculation failed'))
       return false
     } finally {
-      setIsLoading(false)
+      if (isLatestRequest(requestId)) {
+        setIsLoading(false)
+      }
     }
+  }
+
+  function startRequest() {
+    activeRequestIdRef.current += 1
+    return activeRequestIdRef.current
+  }
+
+  function invalidateRequests() {
+    activeRequestIdRef.current += 1
+  }
+
+  function isLatestRequest(requestId: number) {
+    return activeRequestIdRef.current === requestId
   }
 
   function clearError(target: ErrorTarget) {
