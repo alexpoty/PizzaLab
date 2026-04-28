@@ -1,6 +1,6 @@
 import type { Dispatch, SetStateAction } from 'react'
 import { DoughForm } from './DoughForm'
-import type { DoughCalculationResponse } from '../types/dough'
+import type { DoughCalculationResponse, IngredientGroup } from '../types/dough'
 import type { DoughMetadata, FormState, PresetMetadata } from '../types/dough'
 import type { Recipe } from '../types/recipe'
 
@@ -129,12 +129,20 @@ export function RecipeDetailModal({
           <div className="recipe-summary-block">
             <h3>Ingredients</h3>
             {result ? (
-              <div className="recipe-ingredients large">
-                <span>Flour {formatGram(result.flourGrams)}</span>
-                <span>Water {formatGram(result.waterGrams)}</span>
-                <span>Salt {formatGram(result.saltGrams)}</span>
-                <span>Yeast {formatGram(result.yeastGrams)}</span>
-              </div>
+              <>
+                <div className="recipe-ingredients large">
+                  <span>Flour {formatGram(result.flourGrams)}</span>
+                  <span>Water {formatGram(result.waterGrams)}</span>
+                  <span>Salt {formatGram(result.saltGrams)}</span>
+                  <span>Yeast {formatGram(result.yeastGrams)}</span>
+                </div>
+                <div className="recipe-modal-mix-grid">
+                  {result.preferment && (
+                    <RecipeMixBlock title="Preferment" group={result.preferment} />
+                  )}
+                  <RecipeMixBlock title="Final mix" group={result.finalMix} />
+                </div>
+              </>
             ) : (
               <p className="empty-recipes">Preview unavailable for this saved formula.</p>
             )}
@@ -178,6 +186,29 @@ function FormulaFact({ label, value }: { label: string; value: string | number }
     <div>
       <dt>{label}</dt>
       <dd>{value}</dd>
+    </div>
+  )
+}
+
+function RecipeMixBlock({ title, group }: { title: string; group: IngredientGroup }) {
+  return (
+    <div className="recipe-modal-mix-block">
+      <h4>{title}</h4>
+      <div className="recipe-modal-mix-list">
+        <RecipeMixRow label="Flour" value={group.flourGrams} />
+        <RecipeMixRow label="Water" value={group.waterGrams} />
+        {typeof group.saltGrams === 'number' && <RecipeMixRow label="Salt" value={group.saltGrams} />}
+        <RecipeMixRow label="Yeast" value={group.yeastGrams} />
+      </div>
+    </div>
+  )
+}
+
+function RecipeMixRow({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="recipe-modal-mix-row">
+      <span>{label}</span>
+      <strong>{formatGram(value)}</strong>
     </div>
   )
 }

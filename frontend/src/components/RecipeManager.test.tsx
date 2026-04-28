@@ -272,6 +272,31 @@ describe('RecipeManager', () => {
     expect(calculateDough).toHaveBeenNthCalledWith(2, editedFormula)
   })
 
+  it('shows preferment and final mix breakdown for saved preferment recipes', async () => {
+    const prefermentRecipe: Recipe = {
+      id: 'recipe-2',
+      name: 'Poolish dough',
+      formula: editedFormula,
+      createdAt: '2026-04-27T00:05:00Z',
+    }
+
+    vi.mocked(fetchRecipes).mockResolvedValue([prefermentRecipe])
+    vi.mocked(deleteRecipe).mockResolvedValue(undefined)
+    vi.mocked(calculateDough).mockResolvedValue(prefermentCalculationResult)
+
+    render(<RecipeManagerHarness />)
+
+    await userEvent.click(await screen.findByText('Poolish dough'))
+
+    expect(await screen.findByRole('dialog')).toBeTruthy()
+    expect(screen.getByText('Preferment')).toBeTruthy()
+    expect(screen.getByText('Final mix')).toBeTruthy()
+    expect(screen.getAllByText('Flour 920.0g').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('276.0g').length).toBeGreaterThan(1)
+    expect(screen.getByText('358.8g')).toBeTruthy()
+    expect(screen.getAllByText('1.2g').length).toBeGreaterThan(0)
+  })
+
   it('restores the loaded recipe formula when modal edits are canceled', async () => {
     const initialRecipe: Recipe = {
       id: 'recipe-1',
