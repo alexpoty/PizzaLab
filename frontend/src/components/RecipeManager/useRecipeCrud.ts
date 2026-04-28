@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createRecipe, deleteRecipe, fetchRecipes, updateRecipe } from '../../api/recipeApi'
 import type { DoughCalculationRequest } from '../../types/dough'
 import type { Recipe } from '../../types/recipe'
@@ -27,6 +27,7 @@ type UseRecipeCrudArgs = {
 }
 
 export function useRecipeCrud({ formula, onSavedRecipe }: UseRecipeCrudArgs) {
+  const canApplyBootstrapRef = useRef(true)
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [newRecipeName, setNewRecipeName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -37,7 +38,7 @@ export function useRecipeCrud({ formula, onSavedRecipe }: UseRecipeCrudArgs) {
 
     fetchRecipes()
       .then((data) => {
-        if (isMounted) {
+        if (isMounted && canApplyBootstrapRef.current) {
           setRecipes(data)
         }
       })
@@ -62,6 +63,7 @@ export function useRecipeCrud({ formula, onSavedRecipe }: UseRecipeCrudArgs) {
 
     setIsLoading(true)
     setPanelError(null)
+    canApplyBootstrapRef.current = false
 
     try {
       const savedRecipe = await createRecipe({ name, formula })
@@ -92,6 +94,7 @@ export function useRecipeCrud({ formula, onSavedRecipe }: UseRecipeCrudArgs) {
 
     setIsLoading(true)
     setModalError(null)
+    canApplyBootstrapRef.current = false
 
     try {
       const savedRecipe =
@@ -124,6 +127,7 @@ export function useRecipeCrud({ formula, onSavedRecipe }: UseRecipeCrudArgs) {
     setModalError,
   }: RemoveRecipeArgs) => {
     setIsLoading(true)
+    canApplyBootstrapRef.current = false
 
     if (errorTarget === 'panel') {
       setPanelError(null)
