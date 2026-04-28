@@ -1,0 +1,85 @@
+@use './styles/tokens' as *;
+
+.app-shell {
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, rgba(255, 251, 241, 0.8), rgba(246, 248, 244, 0.95)),
+    url('https://images.unsplash.com/photo-1594007654729-407eedc4be65?auto=format&fit=crop&w=1800&q=80');
+  background-size: cover;
+  background-position: center;
+  color: $color-text;
+}
+
+.workspace {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 32px 0;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+h1 {
+  max-width: 720px;
+  color: $color-text-strong;
+  font-size: 52px;
+  line-height: 1.02;
+  letter-spacing: 0;
+}
+
+.total-badge {
+  min-width: 132px;
+  padding: 12px 14px;
+  border: 1px solid $color-border-panel;
+  border-radius: $radius-md;
+  background: $color-surface-badge;
+  text-align: right;
+}
+
+.total-badge span {
+  display: block;
+  color: $color-text-muted;
+  font-size: 13px;
+}
+
+.total-badge strong {
+  color: $color-text-strong;
+  font-size: 24px;
+}
+
+.calculator-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 430px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+  margin-bottom: 18px;
+}
+
+@media (max-width: $breakpoint-tablet) {
+  .workspace {
+    width: min(100% - 20px, 680px);
+    padding: 18px 0;
+  }
+
+  .topbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  h1 {
+    font-size: 36px;
+  }
+
+  .total-badge {
+    text-align: left;
+  }
+
+  .calculator-grid {
+    grid-template-columns: 1fr;
+  }
+}

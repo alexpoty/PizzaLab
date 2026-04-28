@@ -1,13 +1,14 @@
+import './DoughForm.scss'
 import type { Dispatch, SetStateAction } from 'react'
-import { methodLabels, yeastLabels } from '../data/doughDefaults'
+import { methodLabels, yeastLabels } from '../../data/doughDefaults'
 import type {
   DoughMetadata,
   FermentationPreset,
   FormState,
   PresetMetadata,
   YeastType,
-} from '../types/dough'
-import { NumberField } from './NumberField'
+} from '../../types/dough'
+import { NumberField } from '../NumberField'
 
 type DoughFormProps = {
   metadata: DoughMetadata
@@ -18,6 +19,8 @@ type DoughFormProps = {
   error: string | null
   isLoading: boolean
   onSubmit: () => void
+  submitLabel?: string
+  className?: string
 }
 
 export function DoughForm({
@@ -29,10 +32,12 @@ export function DoughForm({
   error,
   isLoading,
   onSubmit,
+  submitLabel = 'Calculate dough',
+  className = 'control-panel',
 }: DoughFormProps) {
   return (
     <form
-      className="control-panel"
+      className={className}
       onSubmit={(event) => {
         event.preventDefault()
         void onSubmit()
@@ -53,6 +58,7 @@ export function DoughForm({
                   metadata.fermentationPresets.find((preset) =>
                     preset.compatibleDoughMethods.includes(method),
                   )?.code ?? current.fermentationPreset,
+                fermentationSchedule: null,
                 prefermentFlourPercent: method === 'BIGA' ? 45 : 30,
               }))
             }
@@ -114,14 +120,16 @@ export function DoughForm({
       <label className="select-field">
         <span>Preset</span>
         <select
-          value={selectedPreset?.code ?? form.fermentationPreset}
+          value={form.fermentationSchedule ? 'MANUAL' : selectedPreset?.code ?? form.fermentationPreset ?? ''}
           onChange={(event) =>
             setForm((current) => ({
               ...current,
               fermentationPreset: event.target.value as FermentationPreset,
+              fermentationSchedule: null,
             }))
           }
         >
+          {form.fermentationSchedule && <option value="MANUAL">Manual schedule</option>}
           {compatiblePresets.map((preset) => (
             <option key={preset.code} value={preset.code}>
               {preset.label}
@@ -174,7 +182,7 @@ export function DoughForm({
 
       {error && <p className="error-message">{error}</p>}
       <button className="calculate-button" type="submit" disabled={isLoading}>
-        {isLoading ? 'Calculating...' : 'Calculate dough'}
+        {isLoading ? 'Calculating...' : submitLabel}
       </button>
     </form>
   )

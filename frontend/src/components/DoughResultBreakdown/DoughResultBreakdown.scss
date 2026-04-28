@@ -1,0 +1,93 @@
+@use '../../styles/tokens' as *;
+
+.ingredient-list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.ingredient-list-modal {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 0;
+}
+
+.ingredient-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  min-height: 58px;
+  padding: 0 14px;
+  border: 1px solid $color-border-default;
+  border-radius: $radius-md;
+  background: $color-surface-card;
+}
+
+.ingredient-row span {
+  color: $color-text-muted;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.ingredient-row strong {
+  color: $color-text-strong;
+  font-size: 22px;
+}
+
+.ingredient-row.compact {
+  min-height: 42px;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid $color-border-subtle;
+  border-radius: 0;
+  background: transparent;
+}
+
+.ingredient-row.compact strong {
+  font-size: 18px;
+}
+
+.mix-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.mix-grid-modal {
+  margin-top: 12px;
+}
+
+.mix-grid-single {
+  grid-template-columns: 1fr;
+}
+
+.mix-block {
+  padding: 16px;
+  border: 1px solid $color-border-default;
+  border-radius: $radius-md;
+  background: $color-surface-card-strong;
+}
+
+.mix-block h3,
+.mix-block h4 {
+  margin-bottom: 10px;
+  color: $color-text-accent;
+}
+
+.mix-block h3 {
+  font-size: 18px;
+}
+
+.mix-block h4 {
+  font-size: 16px;
+}
+
+@media (max-width: $breakpoint-tablet) {
+  .ingredient-list,
+  .ingredient-list-modal,
+  .mix-grid,
+  .mix-grid-modal {
+    grid-template-columns: 1fr;
+  }
+}

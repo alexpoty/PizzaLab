@@ -1,9 +1,32 @@
 services:
+  database:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: pizzalab
+      POSTGRES_USER: pizzalab
+      POSTGRES_PASSWORD: pizzalab
+    ports:
+      - "5432:5432"
+    volumes:
+      - pizzalab-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pizzalab -d pizzalab"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: .
       dockerfile: backend/Dockerfile
     image: pizzalab-backend:local
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/pizzalab
+      SPRING_DATASOURCE_USERNAME: pizzalab
+      SPRING_DATASOURCE_PASSWORD: pizzalab
     ports:
       - "8080:8080"
 
@@ -16,3 +39,6 @@ services:
       - backend
     ports:
       - "3000:80"
+
+volumes:
+  pizzalab-postgres-data:

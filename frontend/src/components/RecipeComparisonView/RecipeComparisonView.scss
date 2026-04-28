@@ -1,0 +1,145 @@
+@use '../../styles/tokens' as *;
+
+.recipe-comparison {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid $color-border-default;
+  border-radius: $radius-md;
+  background: $color-surface-card;
+}
+
+.recipe-comparison-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.recipe-comparison-header h3 {
+  color: $color-text-strong;
+  font-size: 24px;
+}
+
+.recipe-comparison-header button {
+  min-height: 38px;
+  border: 0;
+  border-radius: $radius-sm;
+  background: $color-surface-muted;
+  color: $color-brand;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.recipe-comparison-hint {
+  color: $color-text-soft;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.recipe-comparison-grid {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.8fr) repeat(3, minmax(0, 1fr));
+  border: 1px solid $color-border-default;
+  border-radius: $radius-md;
+  overflow: hidden;
+}
+
+.recipe-comparison-grid > div {
+  padding: 12px 14px;
+  border-right: 1px solid $color-border-default;
+  border-bottom: 1px solid $color-border-default;
+}
+
+.recipe-comparison-grid > div:nth-child(4n) {
+  border-right: 0;
+}
+
+.recipe-comparison-grid > div:nth-last-child(-n + 4) {
+  border-bottom: 0;
+}
+
+.recipe-comparison-head {
+  display: grid;
+  gap: 4px;
+  background: $color-surface-muted-alt;
+  color: $color-text-accent;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.recipe-comparison-head em {
+  color: $color-text-muted;
+  font-size: 12px;
+  font-style: normal;
+  text-transform: none;
+}
+
+.recipe-comparison-corner {
+  place-content: center start;
+}
+
+.recipe-comparison-label {
+  display: flex;
+  align-items: center;
+  color: $color-text-accent;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.recipe-comparison-value,
+.recipe-comparison-delta {
+  display: flex;
+  align-items: center;
+  color: $color-text-strong;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.recipe-comparison-delta {
+  gap: 8px;
+}
+
+.recipe-comparison-delta.increase {
+  background: $color-surface-success;
+  color: $color-success;
+}
+
+.recipe-comparison-delta.decrease {
+  background: $color-surface-danger;
+  color: $color-brand-strong;
+}
+
+.recipe-comparison-delta.neutral {
+  background: $color-surface-muted;
+  color: $color-text-soft;
+}
+
+@media (max-width: $breakpoint-tablet) {
+  .recipe-comparison-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .recipe-comparison-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .recipe-comparison-grid > div:nth-child(4n) {
+    border-right: 1px solid $color-border-default;
+  }
+
+  .recipe-comparison-grid > div:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .recipe-comparison-grid > div:nth-last-child(-n + 4) {
+    border-bottom: 1px solid $color-border-default;
+  }
+
+  .recipe-comparison-grid > div:nth-last-child(-n + 2) {
+    border-bottom: 0;
+  }
+}

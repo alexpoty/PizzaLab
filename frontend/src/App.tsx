@@ -1,7 +1,11 @@
-import './App.css'
+import './App.scss'
+import type { DoughCalculationRequest, FormState } from './types/dough'
 import { DoughForm } from './components/DoughForm'
+import { RecipeManager } from './components/RecipeManager'
 import { ResultsPanel } from './components/ResultsPanel'
+import { buildCalculationRequest } from './api/doughApi'
 import { useDoughCalculator } from './hooks/useDoughCalculator'
+import { applyRecipeFormulaToForm } from './utils/recipeForm'
 
 function App() {
   const {
@@ -15,6 +19,11 @@ function App() {
     selectedPreset,
     calculate,
   } = useDoughCalculator()
+  const currentFormula = buildCalculationRequest(form, selectedPreset)
+
+  const loadRecipe = (formula: DoughCalculationRequest) => {
+    setForm((current): FormState => applyRecipeFormulaToForm(current, formula))
+  }
 
   return (
     <main className="app-shell">
@@ -43,6 +52,16 @@ function App() {
           />
           <ResultsPanel result={result} />
         </section>
+
+        <RecipeManager
+          metadata={metadata}
+          form={form}
+          setForm={setForm}
+          compatiblePresets={compatiblePresets}
+          selectedPreset={selectedPreset}
+          formula={currentFormula}
+          onLoadRecipe={loadRecipe}
+        />
       </section>
     </main>
   )

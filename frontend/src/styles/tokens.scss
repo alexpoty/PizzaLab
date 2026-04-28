@@ -1,0 +1,46 @@
+$color-text: #1f2520;
+$color-text-strong: #141714;
+$color-text-muted: #697169;
+$color-text-soft: #5f685d;
+$color-text-accent: #31382f;
+$color-brand: #8f3528;
+$color-brand-strong: #9b2c20;
+$color-brand-soft: #465138;
+$color-success: #2d6a36;
+
+$color-surface-page: #f6f8f4;
+$color-surface-panel: rgba(255, 255, 255, 0.92);
+$color-surface-card: #fbfcf8;
+$color-surface-card-strong: #ffffff;
+$color-surface-muted: #f2f4ec;
+$color-surface-muted-alt: #eef1e8;
+$color-surface-accent: #eaf0df;
+$color-surface-info: #f7f9f3;
+$color-surface-success: #ebf5ea;
+$color-surface-danger: #fde8e3;
+$color-surface-overlay: rgba(20, 23, 20, 0.48);
+$color-surface-badge: rgba(255, 255, 255, 0.82);
+
+$color-border-subtle: #e8eadf;
+$color-border-default: #e0e4d8;
+$color-border-strong: #d9ddcf;
+$color-border-emphasis: #d4dac8;
+$color-border-hover: #c8cfbb;
+$color-border-panel: rgba(31, 37, 32, 0.14);
+$color-border-focus: rgba(143, 53, 40, 0.16);
+
+$radius-sm: 6px;
+$radius-md: 8px;
+$radius-pill: 999px;
+
+$shadow-panel: 0 20px 70px rgba(36, 41, 34, 0.12);
+$shadow-card-hover: 0 12px 28px rgba(36, 41, 34, 0.08);
+$shadow-focus: 0 0 0 1px rgba(143, 53, 40, 0.16);
+$shadow-modal: 0 24px 80px rgba(20, 23, 20, 0.28);
+
+$transition-fast:
+  border-color 120ms ease,
+  box-shadow 120ms ease,
+  transform 120ms ease;
+
+$breakpoint-tablet: 900px;

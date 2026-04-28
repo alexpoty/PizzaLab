@@ -10,6 +10,7 @@ const baseForm: FormState = {
   yeastType: 'INSTANT',
   doughMethod: 'DIRECT',
   fermentationPreset: 'COLD_24H',
+  fermentationSchedule: null,
   roomTemperatureCelsius: 20,
   coldTemperatureCelsius: 5,
   prefermentFlourPercent: 30,
@@ -35,6 +36,7 @@ describe('buildCalculationRequest', () => {
       yeastType: 'INSTANT',
       doughMethod: 'DIRECT',
       fermentationPreset: 'COLD_24H',
+      fermentationSchedule: null,
       roomTemperatureCelsius: undefined,
       coldTemperatureCelsius: 5,
       prefermentFlourPercent: undefined,
@@ -69,5 +71,39 @@ describe('buildCalculationRequest', () => {
 
   it('falls back to the form preset when metadata selection is missing', () => {
     expect(buildCalculationRequest(baseForm, undefined).fermentationPreset).toBe('COLD_24H')
+  })
+
+  it('uses manual fermentation schedule instead of stale preset selection', () => {
+    const form: FormState = {
+      ...baseForm,
+      fermentationPreset: null,
+      fermentationSchedule: {
+        mode: 'MIXED',
+        roomHours: 16,
+        roomTemperatureCelsius: 20,
+        coldHours: 24,
+        coldTemperatureCelsius: 4,
+      },
+    }
+    const staleSelectedPreset: PresetMetadata = {
+      code: 'COLD_24H',
+      label: '24h cold fermentation',
+      compatibleDoughMethods: ['DIRECT'],
+      requiresRoomTemperature: false,
+      requiresColdTemperature: true,
+      roomHours: 0,
+      coldHours: 24,
+    }
+
+    expect(buildCalculationRequest(form, staleSelectedPreset)).toMatchObject({
+      fermentationPreset: null,
+      fermentationSchedule: {
+        mode: 'MIXED',
+        roomHours: 16,
+        roomTemperatureCelsius: 20,
+        coldHours: 24,
+        coldTemperatureCelsius: 4,
+      },
+    })
   })
 })
