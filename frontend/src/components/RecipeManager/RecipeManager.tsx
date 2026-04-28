@@ -9,6 +9,8 @@ import type {
 import { RecipeComparisonView } from '../RecipeComparisonView'
 import { RecipeDetailModal } from '../RecipeDetailModal'
 import { RecipeListItem } from '../RecipeListItem'
+import { RecipeCompareStatus } from './RecipeCompareStatus'
+import { RecipeSaveRow } from './RecipeSaveRow'
 import { useRecipeManager } from './useRecipeManager'
 
 type RecipeManagerProps = {
@@ -68,19 +70,12 @@ export function RecipeManager({
         <span>{recipes.length}</span>
       </div>
 
-      <div className="recipe-save-row">
-        <label>
-          <span>Name</span>
-          <input
-            value={newRecipeName}
-            onChange={(event) => setNewRecipeName(event.target.value)}
-            placeholder="24h room direct"
-          />
-        </label>
-        <button type="button" onClick={saveNewRecipe} disabled={isLoading}>
-          Save current
-        </button>
-      </div>
+      <RecipeSaveRow
+        newRecipeName={newRecipeName}
+        isLoading={isLoading}
+        onChangeName={setNewRecipeName}
+        onSave={saveNewRecipe}
+      />
 
       {panelError && <p className="error-message">{panelError}</p>}
 
@@ -103,16 +98,11 @@ export function RecipeManager({
         )}
       </div>
 
-      <div className="recipe-compare-status" aria-live="polite">
-        <p>
-          Compare selection: <strong>{comparisonRecipeIds.length}</strong>/2
-        </p>
-        {comparisonRecipeIds.length > 0 && (
-          <button type="button" onClick={clearComparisonSelection} disabled={isLoading}>
-            Clear compare
-          </button>
-        )}
-      </div>
+      <RecipeCompareStatus
+        selectedCount={comparisonRecipeIds.length}
+        isLoading={isLoading}
+        onClear={clearComparisonSelection}
+      />
 
       {comparison && (
         <RecipeComparisonView
