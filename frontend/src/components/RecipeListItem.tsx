@@ -3,16 +3,20 @@ import type { Recipe } from '../types/recipe'
 type RecipeListItemProps = {
   recipe: Recipe
   isActive: boolean
+  isCompared: boolean
   isDisabled: boolean
   onSelect: (recipe: Recipe) => void
+  onToggleCompare: (recipe: Recipe) => void
   onDelete: (recipeId: string) => void
 }
 
 export function RecipeListItem({
   recipe,
   isActive,
+  isCompared,
   isDisabled,
   onSelect,
+  onToggleCompare,
   onDelete,
 }: RecipeListItemProps) {
   return (
@@ -49,6 +53,17 @@ export function RecipeListItem({
         </p>
       </div>
       <div className="recipe-actions">
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation()
+            onToggleCompare(recipe)
+          }}
+          disabled={isDisabled}
+          aria-pressed={isCompared}
+        >
+          {isCompared ? 'Selected' : 'Compare'}
+        </button>
         <button
           type="button"
           onClick={(event) => {

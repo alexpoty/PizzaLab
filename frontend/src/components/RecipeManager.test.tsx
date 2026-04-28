@@ -89,6 +89,38 @@ const calculationResult: DoughCalculationResponse = {
   },
 }
 
+const prefermentCalculationResult: DoughCalculationResponse = {
+  flourGrams: 920,
+  waterGrams: 634.8,
+  saltGrams: 25.8,
+  yeastGrams: 2.4,
+  totalDoughWeightGrams: 1583,
+  preferment: {
+    flourGrams: 276,
+    waterGrams: 276,
+    yeastGrams: 1.2,
+  },
+  finalMix: {
+    flourGrams: 644,
+    waterGrams: 358.8,
+    saltGrams: 25.8,
+    yeastGrams: 1.2,
+  },
+  yeastCalculation: {
+    yeastType: 'INSTANT',
+    doughMethod: 'POOLISH',
+    roomEffectHours: 24,
+    coldEffectHours: 0,
+    effectiveFermentationHours: 24,
+    freshYeastPercent: 0.24,
+    selectedYeastPercent: 0.08,
+    freshYeastEquivalentGrams: 2.2,
+    selectedYeastGrams: 0.7,
+    prefermentYeastGrams: 0.35,
+    finalMixYeastGrams: 0.35,
+  },
+}
+
 describe('RecipeManager', () => {
   afterEach(() => {
     cleanup()
@@ -192,6 +224,52 @@ describe('RecipeManager', () => {
       expect(readCurrentFormula()).toEqual({ ...editedFormula, fermentationSchedule: null })
     })
     expect(calculateDough).toHaveBeenNthCalledWith(3, editedFormula)
+  })
+
+  it('compares two saved recipes side by side, including preferment recipes', async () => {
+    const directRecipe: Recipe = {
+      id: 'recipe-1',
+      name: 'Direct dough',
+      formula: originalFormula,
+      createdAt: '2026-04-27T00:00:00Z',
+    }
+    const prefermentRecipe: Recipe = {
+      id: 'recipe-2',
+      name: 'Poolish dough',
+      formula: editedFormula,
+      createdAt: '2026-04-27T00:05:00Z',
+    }
+
+    vi.mocked(fetchRecipes).mockResolvedValue([directRecipe, prefermentRecipe])
+    vi.mocked(deleteRecipe).mockResolvedValue(undefined)
+    vi.mocked(calculateDough)
+      .mockResolvedValueOnce(calculationResult)
+      .mockResolvedValueOnce(prefermentCalculationResult)
+
+    render(<RecipeManagerHarness />)
+
+    expect(await screen.findByText('Direct dough')).toBeTruthy()
+    expect(screen.getByText('Poolish dough')).toBeTruthy()
+
+    const compareButtons = screen.getAllByRole('button', { name: 'Compare' })
+    await userEvent.click(compareButtons[0])
+    await userEvent.click(compareButtons[1])
+
+    expect(await screen.findByText('Recipe delta view')).toBeTruthy()
+    expect(
+      screen.getByText((_, element) =>
+        element?.textContent === 'Comparing Poolish dough against Direct dough.',
+      ),
+    ).toBeTruthy()
+    expect(screen.getByText('Flour')).toBeTruthy()
+    expect(screen.getByText('1000.0g')).toBeTruthy()
+    expect(screen.getByText('920.0g')).toBeTruthy()
+    expect(screen.getByText('-80.0g')).toBeTruthy()
+    expect(screen.getByText('-15.2g')).toBeTruthy()
+    expect(screen.getByText('+0.9g')).toBeTruthy()
+    expect(screen.getByText('poolish')).toBeTruthy()
+    expect(calculateDough).toHaveBeenNthCalledWith(1, originalFormula)
+    expect(calculateDough).toHaveBeenNthCalledWith(2, editedFormula)
   })
 
   it('restores the loaded recipe formula when modal edits are canceled', async () => {

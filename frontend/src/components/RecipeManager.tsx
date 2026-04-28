@@ -10,6 +10,7 @@ import type {
   PresetMetadata,
 } from '../types/dough'
 import type { Recipe } from '../types/recipe'
+import { RecipeComparisonView } from './RecipeComparisonView'
 import { RecipeDetailModal } from './RecipeDetailModal'
 import { RecipeListItem } from './RecipeListItem'
 
@@ -28,6 +29,13 @@ type RecipePreview = {
   result: DoughCalculationResponse | null
 }
 
+type RecipeComparison = {
+  leftRecipe: Recipe
+  rightRecipe: Recipe
+  leftResult: DoughCalculationResponse
+  rightResult: DoughCalculationResponse
+}
+
 type ModalMode = 'view' | 'edit' | 'duplicate'
 
 export function RecipeManager({
@@ -44,6 +52,8 @@ export function RecipeManager({
   const [preview, setPreview] = useState<RecipePreview | null>(null)
   const [newRecipeName, setNewRecipeName] = useState('')
   const [activeRecipeId, setActiveRecipeId] = useState<string | null>(null)
+  const [comparisonRecipeIds, setComparisonRecipeIds] = useState<string[]>([])
+  const [comparison, setComparison] = useState<RecipeComparison | null>(null)
   const [modalMode, setModalMode] = useState<ModalMode>('view')
   const [modalRecipeName, setModalRecipeName] = useState('')
   const [sourceRecipeName, setSourceRecipeName] = useState<string | null>(null)
@@ -80,6 +90,60 @@ export function RecipeManager({
       isMounted = false
     }
   }, [])
+
+  useEffect(() => {
+    if (comparisonRecipeIds.length < 2) {
+      setComparison(null)
+      return
+    }
+
+    const selectedRecipes = comparisonRecipeIds
+      .map((recipeId) => recipes.find((recipe) => recipe.id === recipeId) ?? null)
+      .filter((recipe): recipe is Recipe => recipe !== null)
+
+    if (selectedRecipes.length < 2) {
+      setComparisonRecipeIds((currentIds) =>
+        currentIds.filter((recipeId) => recipes.some((recipe) => recipe.id === recipeId)),
+      )
+      setComparison(null)
+      return
+    }
+
+    let isMounted = true
+    setIsLoading(true)
+    setPanelError(null)
+
+    Promise.all([calculateDough(selectedRecipes[0].formula), calculateDough(selectedRecipes[1].formula)])
+      .then(([leftResult, rightResult]) => {
+        if (!isMounted) {
+          return
+        }
+
+        setComparison({
+          leftRecipe: selectedRecipes[0],
+          rightRecipe: selectedRecipes[1],
+          leftResult,
+          rightResult,
+        })
+      })
+      .catch((caught) => {
+        if (!isMounted) {
+          return
+        }
+
+        setComparison(null)
+        setPanelError(caught instanceof Error ? caught.message : 'Recipe comparison failed')
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoading(false)
+        }
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [comparisonRecipeIds, recipes])
 
   // Recipes persist the formula input. Ingredient details are calculated on demand
   // so the modal always uses the same calculator logic as the main results panel.
@@ -290,13 +354,36 @@ export function RecipeManager({
               key={recipe.id}
               recipe={recipe}
               isActive={recipe.id === activeRecipeId}
+              isCompared={comparisonRecipeIds.includes(recipe.id)}
               isDisabled={isLoading}
               onSelect={openRecipe}
+              onToggleCompare={toggleCompareRecipe}
               onDelete={(recipeId) => void removeRecipe(recipeId, 'panel')}
             />
           ))
         )}
       </div>
+
+      <div className="recipe-compare-status" aria-live="polite">
+        <p>
+          Compare selection: <strong>{comparisonRecipeIds.length}</strong>/2
+        </p>
+        {comparisonRecipeIds.length > 0 && (
+          <button type="button" onClick={clearComparisonSelection} disabled={isLoading}>
+            Clear compare
+          </button>
+        )}
+      </div>
+
+      {comparison && (
+        <RecipeComparisonView
+          leftRecipe={comparison.leftRecipe}
+          rightRecipe={comparison.rightRecipe}
+          leftResult={comparison.leftResult}
+          rightResult={comparison.rightResult}
+          onClear={clearComparisonSelection}
+        />
+      )}
 
       {preview && (
         <RecipeDetailModal
@@ -354,6 +441,27 @@ export function RecipeManager({
     }
 
     setPanelError(message)
+  }
+
+  function toggleCompareRecipe(recipe: Recipe) {
+    setPanelError(null)
+    setComparisonRecipeIds((currentIds) => {
+      if (currentIds.includes(recipe.id)) {
+        return currentIds.filter((recipeId) => recipeId !== recipe.id)
+      }
+
+      if (currentIds.length === 2) {
+        return [currentIds[1], recipe.id]
+      }
+
+      return [...currentIds, recipe.id]
+    })
+  }
+
+  function clearComparisonSelection() {
+    setComparisonRecipeIds([])
+    setComparison(null)
+    setPanelError(null)
   }
 }
 
