@@ -65,6 +65,7 @@ export function useRecipeComparison({
 
     return () => {
       isMounted = false
+      setIsLoading(false)
     }
   }, [comparisonRecipeIds, recipes, setIsLoading, setPanelError])
 
@@ -72,15 +73,19 @@ export function useRecipeComparison({
     setComparison(null)
     setPanelError(null)
     setSelectedRecipeIds((currentIds) => {
-      if (currentIds.includes(recipe.id)) {
-        return currentIds.filter((recipeId) => recipeId !== recipe.id)
+      const validIds = currentIds.filter((recipeId) =>
+        recipes.some((existingRecipe) => existingRecipe.id === recipeId),
+      )
+
+      if (validIds.includes(recipe.id)) {
+        return validIds.filter((recipeId) => recipeId !== recipe.id)
       }
 
-      if (currentIds.length === 2) {
-        return [currentIds[1], recipe.id]
+      if (validIds.length === 2) {
+        return [validIds[1], recipe.id]
       }
 
-      return [...currentIds, recipe.id]
+      return [...validIds, recipe.id]
     })
   }
 
