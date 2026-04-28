@@ -1,0 +1,1 @@
+export { RecipeComparisonView } from './RecipeComparisonView'

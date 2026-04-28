@@ -1,4 +1,5 @@
-import type { Recipe } from '../types/recipe'
+import './RecipeListItem.scss'
+import type { Recipe } from '../../types/recipe'
 
 type RecipeListItemProps = {
   recipe: Recipe

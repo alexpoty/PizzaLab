@@ -1,0 +1,78 @@
+@use '../../styles/tokens' as *;
+
+.results-panel {
+  min-height: 560px;
+  padding: 22px;
+  border: 1px solid $color-border-panel;
+  border-radius: $radius-md;
+  background: $color-surface-panel;
+  box-shadow: $shadow-panel;
+}
+
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 18px;
+}
+
+.result-header h2 {
+  color: $color-text-strong;
+  font-size: 46px;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.yeast-pill {
+  padding: 9px 12px;
+  border-radius: $radius-pill;
+  background: $color-surface-accent;
+  color: $color-brand-soft;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.yeast-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.yeast-details span {
+  padding: 7px 9px;
+  border-radius: 999px;
+  background: $color-surface-muted;
+  color: $color-text-soft;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.empty-results {
+  display: grid;
+  place-content: center;
+  min-height: 500px;
+  text-align: center;
+}
+
+.empty-results h2 {
+  color: $color-text-strong;
+  font-size: 34px;
+}
+
+.empty-results p {
+  max-width: 360px;
+  margin-top: 8px;
+  color: $color-text-muted;
+}
+
+@media (max-width: $breakpoint-tablet) {
+  .results-panel {
+    min-height: 420px;
+  }
+
+  .result-header {
+    flex-direction: column;
+  }
+}

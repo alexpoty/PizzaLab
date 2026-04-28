@@ -5,32 +5,32 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { RecipeManager } from './RecipeManager'
-import { buildCalculationRequest } from '../api/doughApi'
-import { defaultMetadata } from '../data/doughDefaults'
+import { buildCalculationRequest } from '../../api/doughApi'
+import { defaultMetadata } from '../../data/doughDefaults'
 import type {
   DoughCalculationRequest,
   DoughCalculationResponse,
   FormState,
-} from '../types/dough'
-import type { Recipe } from '../types/recipe'
-import { applyRecipeFormulaToForm } from '../utils/recipeForm'
+} from '../../types/dough'
+import type { Recipe } from '../../types/recipe'
+import { applyRecipeFormulaToForm } from '../../utils/recipeForm'
 import {
   createRecipe,
   deleteRecipe,
   fetchRecipes,
   updateRecipe,
-} from '../api/recipeApi'
-import { calculateDough } from '../api/doughApi'
+} from '../../api/recipeApi'
+import { calculateDough } from '../../api/doughApi'
 
-vi.mock('../api/recipeApi', () => ({
+vi.mock('../../api/recipeApi', () => ({
   fetchRecipes: vi.fn(),
   createRecipe: vi.fn(),
   updateRecipe: vi.fn(),
   deleteRecipe: vi.fn(),
 }))
 
-vi.mock('../api/doughApi', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../api/doughApi')>()
+vi.mock('../../api/doughApi', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../api/doughApi')>()
 
   return {
     ...actual,
@@ -291,7 +291,8 @@ describe('RecipeManager', () => {
     expect(await screen.findByRole('dialog')).toBeTruthy()
     expect(screen.getByText('Preferment')).toBeTruthy()
     expect(screen.getByText('Final mix')).toBeTruthy()
-    expect(screen.getAllByText('Flour 920.0g').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Flour').length).toBeGreaterThan(1)
+    expect(screen.getByText('920.0g')).toBeTruthy()
     expect(screen.getAllByText('276.0g').length).toBeGreaterThan(1)
     expect(screen.getByText('358.8g')).toBeTruthy()
     expect(screen.getAllByText('1.2g').length).toBeGreaterThan(0)

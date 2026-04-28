@@ -1,0 +1,86 @@
+@use '../../styles/tokens' as *;
+
+.control-panel {
+  display: grid;
+  gap: 18px;
+  padding: 18px;
+  border: 1px solid $color-border-panel;
+  border-radius: $radius-md;
+  background: $color-surface-panel;
+  box-shadow: $shadow-panel;
+}
+
+.segmented-control {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 4px;
+  border-radius: $radius-md;
+  background: $color-surface-muted-alt;
+}
+
+.segmented-control button,
+.calculate-button {
+  min-height: 42px;
+  border: 0;
+  border-radius: $radius-sm;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.segmented-control button {
+  background: transparent;
+  color: $color-text-muted;
+}
+
+.segmented-control button.active {
+  background: $color-surface-card-strong;
+  color: $color-brand;
+  box-shadow: 0 6px 18px rgba(31, 37, 32, 0.1);
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.select-field {
+  display: grid;
+  gap: 7px;
+  color: $color-text-soft;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.select-field select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid $color-border-strong;
+  border-radius: $radius-sm;
+  background: $color-surface-card;
+  color: $color-text;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  outline: 0;
+}
+
+.calculate-button {
+  background: $color-brand;
+  color: #fff;
+}
+
+.calculate-button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+@media (max-width: $breakpoint-tablet) {
+  .field-grid {
+    grid-template-columns: 1fr;
+  }
+}

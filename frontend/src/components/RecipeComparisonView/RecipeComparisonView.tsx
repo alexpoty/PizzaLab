@@ -1,5 +1,7 @@
-import type { DoughCalculationResponse } from '../types/dough'
-import type { Recipe } from '../types/recipe'
+import './RecipeComparisonView.scss'
+import type { DoughCalculationResponse } from '../../types/dough'
+import type { Recipe } from '../../types/recipe'
+import { formatGram } from '../../utils/format'
 
 type RecipeComparisonViewProps = {
   leftRecipe: Recipe
@@ -112,10 +114,6 @@ function Row({
       </div>
     </>
   )
-}
-
-function formatGram(value: number) {
-  return `${value.toFixed(1)}g`
 }
 
 function formatSignedGram(value: number) {

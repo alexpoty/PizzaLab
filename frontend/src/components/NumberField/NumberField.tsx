@@ -1,3 +1,5 @@
+import './NumberField.scss'
+
 type NumberFieldProps = {
   label: string
   value: number

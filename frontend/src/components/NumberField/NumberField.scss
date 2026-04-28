@@ -1,0 +1,37 @@
+@use '../../styles/tokens' as *;
+
+.number-field {
+  display: grid;
+  gap: 7px;
+  color: $color-text-soft;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.number-field div {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  border: 1px solid $color-border-strong;
+  border-radius: $radius-sm;
+  background: $color-surface-card;
+}
+
+.number-field input {
+  width: 100%;
+  min-width: 0;
+  padding: 0 10px;
+  border: 0;
+  background: transparent;
+  color: $color-text;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  outline: 0;
+}
+
+.number-field em {
+  padding-right: 10px;
+  color: $color-brand;
+  font-style: normal;
+}
