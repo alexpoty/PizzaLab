@@ -1,5 +1,6 @@
 import './RecipeListItem.scss'
 import type { Recipe } from '../../types/recipe'
+import { formatFermentationMode, formatFermentationSchedule } from '../../utils/recipeFormula'
 
 type RecipeListItemProps = {
   recipe: Recipe
@@ -20,6 +21,9 @@ export function RecipeListItem({
   onToggleCompare,
   onDelete,
 }: RecipeListItemProps) {
+  const fermentationMode = formatFermentationMode(recipe.formula)
+  const fermentationSchedule = formatFermentationSchedule(recipe.formula)
+
   return (
     <article
       className={`recipe-item${isActive ? ' active' : ''}${isDisabled ? ' disabled' : ''}`}
@@ -51,6 +55,10 @@ export function RecipeListItem({
         <p>
           {recipe.formula.doughMethod.toLowerCase()} · {recipe.formula.hydrationPercent}%
           hydration · {recipe.formula.saltPercent}% salt
+        </p>
+        <p>
+          {fermentationMode}
+          {fermentationSchedule ? ` · ${fermentationSchedule}` : ''}
         </p>
       </div>
       <div className="recipe-actions">

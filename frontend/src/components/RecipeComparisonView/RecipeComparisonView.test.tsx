@@ -40,6 +40,28 @@ const rightRecipe: Recipe = {
   },
 }
 
+const manualRecipe: Recipe = {
+  id: 'recipe-3',
+  name: 'Manual dough',
+  createdAt: '2026-04-27T00:10:00Z',
+  formula: {
+    pizzaCount: 4,
+    doughBallWeightGrams: 250,
+    hydrationPercent: 66,
+    saltPercent: 2.9,
+    yeastType: 'INSTANT',
+    doughMethod: 'DIRECT',
+    fermentationPreset: null,
+    fermentationSchedule: {
+      mode: 'MIXED',
+      roomHours: 12,
+      roomTemperatureCelsius: 21.5,
+      coldHours: 18,
+      coldTemperatureCelsius: 4.5,
+    },
+  },
+}
+
 const leftResult: DoughCalculationResponse = {
   flourGrams: 1000,
   waterGrams: 650,
@@ -122,5 +144,20 @@ describe('RecipeComparisonView', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Clear' }))
     expect(onClear).toHaveBeenCalledTimes(1)
+  })
+
+  it('renders manual fermentation details in comparison headers', () => {
+    render(
+      <RecipeComparisonView
+        leftRecipe={leftRecipe}
+        rightRecipe={manualRecipe}
+        leftResult={leftResult}
+        rightResult={rightResult}
+        onClear={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText('Manual · 12h room @ 21.5C, 18h cold @ 4.5C')).toBeTruthy()
+    expect(screen.getAllByText('Room 24h · room @ 20C').length).toBeGreaterThan(0)
   })
 })
