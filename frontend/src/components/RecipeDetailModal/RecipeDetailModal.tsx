@@ -4,10 +4,10 @@ import { DoughForm } from '../DoughForm'
 import type { DoughCalculationResponse } from '../../types/dough'
 import type { DoughMetadata, FormState, PresetMetadata } from '../../types/dough'
 import type { Recipe } from '../../types/recipe'
-import type { ModalMode } from '../RecipeManager/recipeManagerTypes'
-import { RecipeDetailModalToolbar } from './RecipeDetailModalToolbar'
-import { RecipeFormulaSummary } from './RecipeFormulaSummary'
-import { RecipeIngredientSummary } from './RecipeIngredientSummary'
+import type { ModalMode } from '../RecipeManager/lib/recipeManagerTypes'
+import { RecipeDetailModalToolbar } from './components/RecipeDetailModalToolbar'
+import { RecipeFormulaSummary } from './components/RecipeFormulaSummary'
+import { RecipeIngredientSummary } from './components/RecipeIngredientSummary'
 
 type RecipeDetailModalProps = {
   recipe: Recipe

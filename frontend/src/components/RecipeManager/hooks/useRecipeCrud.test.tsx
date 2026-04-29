@@ -2,12 +2,12 @@
 
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { createRecipe, fetchRecipes } from '../../api/recipeApi'
-import type { DoughCalculationRequest } from '../../types/dough'
-import type { Recipe } from '../../types/recipe'
+import { createRecipe, fetchRecipes } from '../../../api/recipeApi'
+import type { DoughCalculationRequest } from '../../../types/dough'
+import type { Recipe } from '../../../types/recipe'
 import { useRecipeCrud } from './useRecipeCrud'
 
-vi.mock('../../api/recipeApi', () => ({
+vi.mock('../../../api/recipeApi', () => ({
   fetchRecipes: vi.fn(),
   createRecipe: vi.fn(),
   updateRecipe: vi.fn(),

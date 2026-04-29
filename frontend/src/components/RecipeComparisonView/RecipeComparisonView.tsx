@@ -2,6 +2,7 @@ import './RecipeComparisonView.scss'
 import type { DoughCalculationResponse } from '../../types/dough'
 import type { Recipe } from '../../types/recipe'
 import { formatGram } from '../../utils/format'
+import { formatFermentationMode, formatFermentationSchedule } from '../../utils/recipeFormula'
 
 type RecipeComparisonViewProps = {
   leftRecipe: Recipe
@@ -53,10 +54,12 @@ export function RecipeComparisonView({
         <div className="recipe-comparison-head" role="columnheader">
           <span>{leftRecipe.name}</span>
           <em>{leftRecipe.formula.doughMethod.toLowerCase()}</em>
+          <small>{formatRecipeFermentation(leftRecipe)}</small>
         </div>
         <div className="recipe-comparison-head" role="columnheader">
           <span>{rightRecipe.name}</span>
           <em>{rightRecipe.formula.doughMethod.toLowerCase()}</em>
+          <small>{formatRecipeFermentation(rightRecipe)}</small>
         </div>
         <div className="recipe-comparison-head" role="columnheader">
           Delta
@@ -118,4 +121,11 @@ function Row({
 
 function formatSignedGram(value: number) {
   return `${value > 0 ? '+' : ''}${value.toFixed(1)}g`
+}
+
+function formatRecipeFermentation(recipe: Recipe) {
+  const fermentationMode = formatFermentationMode(recipe.formula)
+  const fermentationSchedule = formatFermentationSchedule(recipe.formula)
+
+  return fermentationSchedule ? `${fermentationMode} · ${fermentationSchedule}` : fermentationMode
 }

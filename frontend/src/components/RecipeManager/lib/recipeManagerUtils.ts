@@ -1,5 +1,5 @@
-import type { DoughCalculationRequest } from '../../types/dough'
-import type { Recipe } from '../../types/recipe'
+import type { DoughCalculationRequest } from '../../../types/dough'
+import type { Recipe } from '../../../types/recipe'
 import type { ModalMode } from './recipeManagerTypes'
 
 export function buildModalRecipe(

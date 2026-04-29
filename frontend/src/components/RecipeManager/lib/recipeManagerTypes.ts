@@ -1,5 +1,5 @@
-import type { DoughCalculationResponse } from '../../types/dough'
-import type { Recipe } from '../../types/recipe'
+import type { DoughCalculationResponse } from '../../../types/dough'
+import type { Recipe } from '../../../types/recipe'
 
 export type ModalMode = 'view' | 'edit' | 'duplicate'
 

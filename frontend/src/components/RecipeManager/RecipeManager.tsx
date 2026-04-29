@@ -9,9 +9,9 @@ import type {
 import { RecipeComparisonView } from '../RecipeComparisonView'
 import { RecipeDetailModal } from '../RecipeDetailModal'
 import { RecipeListItem } from '../RecipeListItem'
-import { RecipeCompareStatus } from './RecipeCompareStatus'
-import { RecipeSaveRow } from './RecipeSaveRow'
-import { useRecipeManager } from './useRecipeManager'
+import { RecipeCompareStatus } from './components/RecipeCompareStatus'
+import { RecipeSaveRow } from './components/RecipeSaveRow'
+import { useRecipeManager } from './hooks/useRecipeManager'
 
 type RecipeManagerProps = {
   metadata: DoughMetadata
@@ -33,32 +33,13 @@ export function RecipeManager({
   onLoadRecipe,
 }: RecipeManagerProps) {
   const {
-    recipes,
-    preview,
+    list,
+    save,
     comparison,
-    modalMode,
-    modalRecipe,
-    modalRecipeName,
-    sourceRecipeName,
-    newRecipeName,
-    activeRecipeId,
-    comparisonRecipeIds,
-    isLoading,
-    panelError,
-    modalError,
-    setNewRecipeName,
-    setModalRecipeName,
-    saveNewRecipe,
-    removeRecipe,
-    openRecipe,
-    startEditingRecipe,
-    startDuplicateRecipe,
-    saveModalRecipe,
-    previewModalRecipe,
-    toggleCompareRecipe,
-    clearComparisonSelection,
-    resetModal,
+    modal,
+    status,
   } = useRecipeManager({ formula, onLoadRecipe })
+  const modalPreview = modal.preview
 
   return (
     <section className="recipe-panel" aria-labelledby="recipes-title">
@@ -67,76 +48,76 @@ export function RecipeManager({
           <p className="section-title">Recipes</p>
           <h2 id="recipes-title">Saved formulas</h2>
         </div>
-        <span>{recipes.length}</span>
+        <span>{list.recipes.length}</span>
       </div>
 
       <RecipeSaveRow
-        newRecipeName={newRecipeName}
-        isLoading={isLoading}
-        onChangeName={setNewRecipeName}
-        onSave={saveNewRecipe}
+        newRecipeName={save.newRecipeName}
+        isLoading={status.isLoading}
+        onChangeName={save.setNewRecipeName}
+        onSave={save.saveNewRecipe}
       />
 
-      {panelError && <p className="error-message">{panelError}</p>}
+      {status.panelError && <p className="error-message">{status.panelError}</p>}
 
       <div className="recipe-list">
-        {recipes.length === 0 ? (
+        {list.recipes.length === 0 ? (
           <p className="empty-recipes">No saved recipes yet.</p>
         ) : (
-          recipes.map((recipe) => (
+          list.recipes.map((recipe) => (
             <RecipeListItem
               key={recipe.id}
               recipe={recipe}
-              isActive={recipe.id === activeRecipeId}
-              isCompared={comparisonRecipeIds.includes(recipe.id)}
-              isDisabled={isLoading}
-              onSelect={openRecipe}
-              onToggleCompare={toggleCompareRecipe}
-              onDelete={(recipeId) => void removeRecipe(recipeId, 'panel')}
+              isActive={recipe.id === list.activeRecipeId}
+              isCompared={comparison.recipeIds.includes(recipe.id)}
+              isDisabled={status.isLoading}
+              onSelect={list.openRecipe}
+              onToggleCompare={comparison.toggleRecipe}
+              onDelete={(recipeId) => void list.removeRecipe(recipeId, 'panel')}
             />
           ))
         )}
       </div>
 
       <RecipeCompareStatus
-        selectedCount={comparisonRecipeIds.length}
-        isLoading={isLoading}
-        onClear={clearComparisonSelection}
+        selectedCount={comparison.recipeIds.length}
+        isLoading={status.isLoading}
+        onClear={comparison.clearSelection}
       />
 
-      {comparison && (
+      {comparison.data && (
         <RecipeComparisonView
-          leftRecipe={comparison.leftRecipe}
-          rightRecipe={comparison.rightRecipe}
-          leftResult={comparison.leftResult}
-          rightResult={comparison.rightResult}
-          onClear={clearComparisonSelection}
+          leftRecipe={comparison.data.leftRecipe}
+          rightRecipe={comparison.data.rightRecipe}
+          leftResult={comparison.data.leftResult}
+          rightResult={comparison.data.rightResult}
+          onClear={comparison.clearSelection}
         />
       )}
 
-      {preview && (
+      {modalPreview && (
         <RecipeDetailModal
-          recipe={modalRecipe ?? preview.recipe}
-          result={preview.result}
-          mode={modalMode}
-          recipeName={modalRecipeName}
-          sourceRecipeName={sourceRecipeName}
-          isLoading={isLoading}
+          recipe={modal.recipe ?? modalPreview.recipe}
+          result={modalPreview.result}
+          mode={modal.mode}
+          recipeName={modal.recipeName}
+          sourceRecipeName={modal.sourceRecipeName}
+          isLoading={status.isLoading}
           metadata={metadata}
           form={form}
           setForm={setForm}
           compatiblePresets={compatiblePresets}
           selectedPreset={selectedPreset}
-          formError={modalError}
-          resultError={modalError}
-          onChangeName={setModalRecipeName}
-          onEdit={startEditingRecipe}
-          onDuplicate={startDuplicateRecipe}
-          onPreview={previewModalRecipe}
-          onSave={saveModalRecipe}
-          onDelete={() => void removeRecipe(preview.recipe.id, 'modal')}
-          onCancelEdit={resetModal}
-          onClose={resetModal}
+          formError={modal.error}
+          resultError={modal.error}
+          onChangeName={modal.setRecipeName}
+          onEdit={modal.startEditing}
+          onDuplicate={modal.startDuplicating}
+          onPreview={modal.previewRecipe}
+          onSave={modal.save}
+          onDelete={() => void list.removeRecipe(modalPreview.recipe.id, 'modal')}
+          onCancelEdit={modal.reset}
+          onClose={modal.reset}
         />
       )}
     </section>
