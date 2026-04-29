@@ -2,13 +2,13 @@
 
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { calculateDough } from '../../api/doughApi'
-import type { DoughCalculationRequest, DoughCalculationResponse } from '../../types/dough'
-import type { Recipe } from '../../types/recipe'
+import { calculateDough } from '../../../api/doughApi'
+import type { DoughCalculationRequest, DoughCalculationResponse } from '../../../types/dough'
+import type { Recipe } from '../../../types/recipe'
 import { useRecipeModalState } from './useRecipeModalState'
 
-vi.mock('../../api/doughApi', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../api/doughApi')>()
+vi.mock('../../../api/doughApi', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../api/doughApi')>()
 
   return {
     ...actual,

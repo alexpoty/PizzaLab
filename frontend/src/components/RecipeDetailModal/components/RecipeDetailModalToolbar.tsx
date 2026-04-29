@@ -1,4 +1,4 @@
-import type { ModalMode } from '../RecipeManager/recipeManagerTypes'
+import type { ModalMode } from '../../RecipeManager/lib/recipeManagerTypes'
 
 type RecipeDetailModalToolbarProps = {
   mode: ModalMode

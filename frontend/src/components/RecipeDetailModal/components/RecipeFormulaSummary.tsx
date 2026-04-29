@@ -1,9 +1,9 @@
-import type { Recipe } from '../../types/recipe'
-import { formatGram } from '../../utils/format'
+import type { Recipe } from '../../../types/recipe'
+import { formatGram } from '../../../utils/format'
 import {
   formatFermentationMode,
   formatFermentationSchedule,
-} from '../../utils/recipeFormula'
+} from '../../../utils/recipeFormula'
 
 type RecipeFormulaSummaryProps = {
   recipe: Recipe

@@ -1,5 +1,5 @@
-import { DoughResultBreakdown } from '../DoughResultBreakdown'
-import type { DoughCalculationResponse } from '../../types/dough'
+import { DoughResultBreakdown } from '../../DoughResultBreakdown'
+import type { DoughCalculationResponse } from '../../../types/dough'
 
 type RecipeIngredientSummaryProps = {
   result: DoughCalculationResponse | null

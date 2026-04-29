@@ -1,9 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
-import { createRecipe, deleteRecipe, fetchRecipes, updateRecipe } from '../../api/recipeApi'
-import type { DoughCalculationRequest } from '../../types/dough'
-import type { Recipe } from '../../types/recipe'
-import type { ErrorTarget, ModalMode } from './recipeManagerTypes'
-import { getErrorMessage } from './recipeManagerUtils'
+import { createRecipe, deleteRecipe, fetchRecipes, updateRecipe } from '../../../api/recipeApi'
+import type { DoughCalculationRequest } from '../../../types/dough'
+import type { Recipe } from '../../../types/recipe'
+import type { ErrorTarget, ModalMode } from '../lib/recipeManagerTypes'
+import { getErrorMessage } from '../lib/recipeManagerUtils'
+import {
+  createRecipeBootstrapState,
+  markRecipeDeleted,
+  markRecipeUpsert,
+  mergeBootstrapRecipes,
+  prependRecipe,
+  removeRecipeById,
+  replaceRecipe,
+} from '../lib/recipeCrudState'
 
 type SaveModalRecipeArgs = {
   mode: ModalMode
@@ -27,27 +36,24 @@ type UseRecipeCrudArgs = {
 }
 
 export function useRecipeCrud({ formula, onSavedRecipe }: UseRecipeCrudArgs) {
-  const canApplyBootstrapRef = useRef(true)
-  const deletedRecipeIdsRef = useRef(new Set<string>())
+  const bootstrapStateRef = useRef(createRecipeBootstrapState())
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [newRecipeName, setNewRecipeName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [panelError, setPanelError] = useState<string | null>(null)
 
-  const lockBootstrap = () => {
-    canApplyBootstrapRef.current = false
-  }
+  const setErrorMessage = (
+    target: ErrorTarget,
+    message: string | null,
+    setModalError?: (message: string | null) => void,
+  ) => {
+    if (target === 'panel') {
+      setPanelError(message)
+      return
+    }
 
-  const markRecipeUpsert = (recipeId: string) => {
-    lockBootstrap()
-    deletedRecipeIdsRef.current.delete(recipeId)
+    setModalError?.(message)
   }
-
-  const markRecipeDeleted = (recipeId: string) => {
-    lockBootstrap()
-    deletedRecipeIdsRef.current.add(recipeId)
-  }
-
   useEffect(() => {
     let isMounted = true
 
@@ -57,13 +63,13 @@ export function useRecipeCrud({ formula, onSavedRecipe }: UseRecipeCrudArgs) {
           return
         }
 
-        if (canApplyBootstrapRef.current) {
+        if (bootstrapStateRef.current.canApplyBootstrap) {
           setRecipes(data)
           return
         }
 
         setRecipes((currentRecipes) =>
-          mergeBootstrapRecipes(currentRecipes, data, deletedRecipeIdsRef.current),
+          mergeBootstrapRecipes(currentRecipes, data, bootstrapStateRef.current.deletedRecipeIds),
         )
       })
       .catch((caught) => {
@@ -90,8 +96,8 @@ export function useRecipeCrud({ formula, onSavedRecipe }: UseRecipeCrudArgs) {
 
     try {
       const savedRecipe = await createRecipe({ name, formula })
-      markRecipeUpsert(savedRecipe.id)
-      setRecipes((currentRecipes) => [savedRecipe, ...currentRecipes])
+      markRecipeUpsert(bootstrapStateRef.current, savedRecipe.id)
+      setRecipes((currentRecipes) => prependRecipe(currentRecipes, savedRecipe))
       setNewRecipeName('')
       await onSavedRecipe(savedRecipe)
     } catch (caught) {
@@ -125,11 +131,9 @@ export function useRecipeCrud({ formula, onSavedRecipe }: UseRecipeCrudArgs) {
           ? await createRecipe({ name, formula })
           : await updateRecipe(recipeId, { name, formula })
 
-      markRecipeUpsert(savedRecipe.id)
+      markRecipeUpsert(bootstrapStateRef.current, savedRecipe.id)
       setRecipes((currentRecipes) =>
-        mode === 'duplicate'
-          ? [savedRecipe, ...currentRecipes]
-          : currentRecipes.map((recipe) => (recipe.id === savedRecipe.id ? savedRecipe : recipe)),
+        mode === 'duplicate' ? prependRecipe(currentRecipes, savedRecipe) : replaceRecipe(currentRecipes, savedRecipe),
       )
       await onSaved(savedRecipe)
     } catch (caught) {
@@ -151,26 +155,15 @@ export function useRecipeCrud({ formula, onSavedRecipe }: UseRecipeCrudArgs) {
     setModalError,
   }: RemoveRecipeArgs) => {
     setIsLoading(true)
-
-    if (errorTarget === 'panel') {
-      setPanelError(null)
-    } else {
-      setModalError(null)
-    }
+    setErrorMessage(errorTarget, null, setModalError)
 
     try {
       await deleteRecipe(id)
-      markRecipeDeleted(id)
-      setRecipes((currentRecipes) => currentRecipes.filter((recipe) => recipe.id !== id))
+      markRecipeDeleted(bootstrapStateRef.current, id)
+      setRecipes((currentRecipes) => removeRecipeById(currentRecipes, id))
       onDeleted()
     } catch (caught) {
-      const message = getErrorMessage(caught, 'Recipe delete failed')
-
-      if (errorTarget === 'panel') {
-        setPanelError(message)
-      } else {
-        setModalError(message)
-      }
+      setErrorMessage(errorTarget, getErrorMessage(caught, 'Recipe delete failed'), setModalError)
     } finally {
       setIsLoading(false)
     }
@@ -189,17 +182,4 @@ export function useRecipeCrud({ formula, onSavedRecipe }: UseRecipeCrudArgs) {
     saveModalRecipe,
     removeRecipe,
   }
-}
-
-function mergeBootstrapRecipes(
-  currentRecipes: Recipe[],
-  bootstrapRecipes: Recipe[],
-  deletedRecipeIds: Set<string>,
-) {
-  const currentRecipeIds = new Set(currentRecipes.map((recipe) => recipe.id))
-  const mergedBootstrapRecipes = bootstrapRecipes.filter(
-    (recipe) => !currentRecipeIds.has(recipe.id) && !deletedRecipeIds.has(recipe.id),
-  )
-
-  return [...currentRecipes, ...mergedBootstrapRecipes]
 }
