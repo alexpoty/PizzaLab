@@ -15,6 +15,13 @@ type ResolvedFermentationTimeline = {
   coldTemperatureCelsius: number
 }
 
+type TimelineStageDefinition = {
+  key: string
+  title: string
+  durationHours: number
+  temperatureCelsius: number
+}
+
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 export function buildFermentationTimeline(
@@ -28,89 +35,79 @@ export function buildFermentationTimeline(
 
   if (form.doughMethod === 'DIRECT') {
     timeline.push(buildInstantEntry('mix', 'Mix dough', cursor))
-    cursor = appendFermentationStages(timeline, schedule, cursor)
+    cursor = appendStages(timeline, buildDirectStages(schedule), cursor)
     timeline.push(buildInstantEntry('ready', 'Ready to bake', cursor))
     return timeline
   }
 
-  const prefermentLabel = form.doughMethod === 'POOLISH' ? 'poolish' : 'biga'
+  const prefermentLabel = getPrefermentLabel(form.doughMethod)
 
   timeline.push(buildInstantEntry('mix-preferment', `Mix ${prefermentLabel}`, cursor))
-
-  if (schedule.roomHours > 0) {
-    const endAt = addHours(cursor, schedule.roomHours)
-    timeline.push(
-      buildDurationEntry(
-        'preferment-ferment',
-        `Ferment ${prefermentLabel}`,
-        cursor,
-        endAt,
-        schedule.roomHours,
-        schedule.roomTemperatureCelsius,
-      ),
-    )
-    cursor = endAt
-  }
+  cursor = appendStages(timeline, buildPrefermentStages(schedule, prefermentLabel), cursor)
 
   timeline.push(buildInstantEntry('final-mix', 'Final mix', cursor))
-
-  if (schedule.coldHours > 0) {
-    const endAt = addHours(cursor, schedule.coldHours)
-    timeline.push(
-      buildDurationEntry(
-        'cold-ferment',
-        'Cold ferment',
-        cursor,
-        endAt,
-        schedule.coldHours,
-        schedule.coldTemperatureCelsius,
-      ),
-    )
-    cursor = endAt
-  }
+  cursor = appendStages(timeline, buildColdStages(schedule), cursor)
 
   timeline.push(buildInstantEntry('ready', 'Ready to bake', cursor))
   return timeline
 }
 
-function appendFermentationStages(
+function appendStages(
   timeline: FermentationTimelineEntry[],
-  schedule: ResolvedFermentationTimeline,
+  stages: TimelineStageDefinition[],
   startedAt: Date,
 ): Date {
   let cursor = startedAt
 
-  if (schedule.roomHours > 0) {
-    const endAt = addHours(cursor, schedule.roomHours)
+  for (const stage of stages) {
+    const endAt = addHours(cursor, stage.durationHours)
     timeline.push(
-      buildDurationEntry(
-        'room-ferment',
-        'Room ferment',
-        cursor,
-        endAt,
-        schedule.roomHours,
-        schedule.roomTemperatureCelsius,
-      ),
-    )
-    cursor = endAt
-  }
-
-  if (schedule.coldHours > 0) {
-    const endAt = addHours(cursor, schedule.coldHours)
-    timeline.push(
-      buildDurationEntry(
-        'cold-ferment',
-        'Cold ferment',
-        cursor,
-        endAt,
-        schedule.coldHours,
-        schedule.coldTemperatureCelsius,
-      ),
+      buildDurationEntry(stage.key, stage.title, cursor, endAt, stage.durationHours, stage.temperatureCelsius),
     )
     cursor = endAt
   }
 
   return cursor
+}
+
+function buildDirectStages(schedule: ResolvedFermentationTimeline): TimelineStageDefinition[] {
+  return [
+    buildStage('room-ferment', 'Room ferment', schedule.roomHours, schedule.roomTemperatureCelsius),
+    buildStage('cold-ferment', 'Cold ferment', schedule.coldHours, schedule.coldTemperatureCelsius),
+  ].filter(isDefined)
+}
+
+function buildPrefermentStages(
+  schedule: ResolvedFermentationTimeline,
+  prefermentLabel: string,
+): TimelineStageDefinition[] {
+  return [
+    buildStage(
+      'preferment-ferment',
+      `Ferment ${prefermentLabel}`,
+      schedule.roomHours,
+      schedule.roomTemperatureCelsius,
+    ),
+  ].filter(isDefined)
+}
+
+function buildColdStages(schedule: ResolvedFermentationTimeline): TimelineStageDefinition[] {
+  return [buildStage('cold-ferment', 'Cold ferment', schedule.coldHours, schedule.coldTemperatureCelsius)].filter(
+    isDefined,
+  )
+}
+
+function buildStage(
+  key: string,
+  title: string,
+  durationHours: number,
+  temperatureCelsius: number,
+): TimelineStageDefinition | null {
+  if (durationHours <= 0) {
+    return null
+  }
+
+  return { key, title, durationHours, temperatureCelsius }
 }
 
 function resolveFermentationTimeline(
@@ -163,6 +160,14 @@ function buildDurationEntry(
 
 function addHours(date: Date, hours: number): Date {
   return new Date(date.getTime() + hours * 60 * 60 * 1000)
+}
+
+function getPrefermentLabel(method: DoughMethod): 'poolish' | 'biga' {
+  return method === 'POOLISH' ? 'poolish' : 'biga'
+}
+
+function isDefined<T>(value: T | null): value is T {
+  return value !== null
 }
 
 function formatTimelineTimestamp(date: Date): string {
