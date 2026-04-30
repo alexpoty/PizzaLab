@@ -42,13 +42,22 @@ private fun DoughCalculationRequest.resolveFermentationSchedule(): FermentationS
  * Maps the API schedule object to the validated domain schedule.
  */
 private fun FermentationScheduleRequest.toDomain(): FermentationSchedule =
-    FermentationSchedule(
-        mode = mode,
-        roomHours = roomHours,
-        roomTemperatureCelsius = roomTemperatureCelsius,
-        coldHours = coldHours,
-        coldTemperatureCelsius = coldTemperatureCelsius,
-    )
+    ManualFermentationScheduleValidator.validate(this)
+        .let {
+            FermentationSchedule(
+                mode = mode,
+                roomHours = roomHours.orZero(),
+                roomTemperatureCelsius = roomTemperatureCelsius.orDefaultRoomTemperature(),
+                coldHours = coldHours.orZero(),
+                coldTemperatureCelsius = coldTemperatureCelsius.orDefaultColdTemperature(),
+            )
+        }
+
+private fun Double?.orZero(): Double = this ?: 0.0
+
+private fun Double?.orDefaultRoomTemperature(): Double = this ?: 20.0
+
+private fun Double?.orDefaultColdTemperature(): Double = this ?: 4.0
 
 /**
  * Delegates preset expansion to the shared domain preset definition.

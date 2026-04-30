@@ -121,6 +121,109 @@ class DoughControllerTest(
     }
 
     @Test
+    fun `returns bad request when room manual schedule misses room temperature`() {
+        mockMvc.post("/api/dough/calculate") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "pizzaCount": 4,
+                  "doughBallWeightGrams": 250,
+                  "hydrationPercent": 65,
+                  "saltPercent": 2.8,
+                  "yeastType": "INSTANT",
+                  "doughMethod": "DIRECT",
+                  "fermentationSchedule": {
+                    "mode": "ROOM",
+                    "roomHours": 8
+                  }
+                }
+            """.trimIndent()
+        }
+            .andExpect {
+                status { isBadRequest() }
+                jsonPath("$.message") { value("ROOM mode requires roomTemperatureCelsius.") }
+            }
+    }
+
+    @Test
+    fun `returns bad request when cold manual schedule misses cold hours`() {
+        mockMvc.post("/api/dough/calculate") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "pizzaCount": 4,
+                  "doughBallWeightGrams": 250,
+                  "hydrationPercent": 65,
+                  "saltPercent": 2.8,
+                  "yeastType": "INSTANT",
+                  "doughMethod": "DIRECT",
+                  "fermentationSchedule": {
+                    "mode": "COLD",
+                    "coldTemperatureCelsius": 4
+                  }
+                }
+            """.trimIndent()
+        }
+            .andExpect {
+                status { isBadRequest() }
+                jsonPath("$.message") { value("COLD mode requires coldHours > 0.") }
+            }
+    }
+
+    @Test
+    fun `returns bad request when mixed manual schedule misses room stage`() {
+        mockMvc.post("/api/dough/calculate") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "pizzaCount": 4,
+                  "doughBallWeightGrams": 250,
+                  "hydrationPercent": 65,
+                  "saltPercent": 2.8,
+                  "yeastType": "INSTANT",
+                  "doughMethod": "DIRECT",
+                  "fermentationSchedule": {
+                    "mode": "MIXED",
+                    "coldHours": 24,
+                    "coldTemperatureCelsius": 4
+                  }
+                }
+            """.trimIndent()
+        }
+            .andExpect {
+                status { isBadRequest() }
+                jsonPath("$.message") { value("MIXED mode requires roomHours > 0.") }
+            }
+    }
+
+    @Test
+    fun `returns bad request when mixed manual schedule misses cold temperature`() {
+        mockMvc.post("/api/dough/calculate") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "pizzaCount": 4,
+                  "doughBallWeightGrams": 250,
+                  "hydrationPercent": 65,
+                  "saltPercent": 2.8,
+                  "yeastType": "INSTANT",
+                  "doughMethod": "DIRECT",
+                  "fermentationSchedule": {
+                    "mode": "MIXED",
+                    "roomHours": 16,
+                    "roomTemperatureCelsius": 20,
+                    "coldHours": 24
+                  }
+                }
+            """.trimIndent()
+        }
+            .andExpect {
+                status { isBadRequest() }
+                jsonPath("$.message") { value("MIXED mode requires coldTemperatureCelsius.") }
+            }
+    }
+
+    @Test
     fun `calculates room temperature preset`() {
         mockMvc.post("/api/dough/calculate") {
             contentType = MediaType.APPLICATION_JSON
