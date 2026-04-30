@@ -124,7 +124,7 @@ export function DoughForm({
   submitLabel = 'Calculate dough',
   className = 'control-panel',
 }: DoughFormProps) {
-  const isManualMode = form.fermentationSchedule !== null
+  const isManualMode = form.fermentationMode === 'MANUAL'
   const manualSchedule = form.fermentationSchedule
 
   return (
@@ -220,11 +220,11 @@ export function DoughForm({
           onClick={() =>
             setForm((current) => ({
               ...current,
+              fermentationMode: 'PRESET',
               fermentationPreset: getCompatiblePresetCode(
                 compatiblePresets,
                 current.fermentationPreset,
               ),
-              fermentationSchedule: null,
             }))
           }
         >
@@ -236,6 +236,7 @@ export function DoughForm({
           onClick={() =>
             setForm((current) => ({
               ...current,
+              fermentationMode: 'MANUAL',
               fermentationPreset: getCompatiblePresetCode(
                 compatiblePresets,
                 current.fermentationPreset,
@@ -258,7 +259,6 @@ export function DoughForm({
               setForm((current) => ({
                 ...current,
                 fermentationPreset: event.target.value as FermentationPreset,
-                fermentationSchedule: null,
               }))
             }
           >

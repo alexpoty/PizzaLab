@@ -37,7 +37,7 @@ export function buildCalculationRequest(
   form: FormState,
   selectedPreset: PresetMetadata | undefined,
 ): DoughCalculationRequest {
-  if (form.fermentationSchedule) {
+  if (form.fermentationMode === 'MANUAL' && form.fermentationSchedule) {
     return {
       pizzaCount: form.pizzaCount,
       doughBallWeightGrams: form.doughBallWeightGrams,

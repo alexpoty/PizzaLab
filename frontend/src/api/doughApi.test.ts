@@ -9,6 +9,7 @@ const baseForm: FormState = {
   saltPercent: 3,
   yeastType: 'INSTANT',
   doughMethod: 'DIRECT',
+  fermentationMode: 'PRESET',
   fermentationPreset: 'COLD_24H',
   fermentationSchedule: null,
   roomTemperatureCelsius: 20,
@@ -76,6 +77,7 @@ describe('buildCalculationRequest', () => {
   it('uses manual fermentation schedule instead of stale preset selection', () => {
     const form: FormState = {
       ...baseForm,
+      fermentationMode: 'MANUAL',
       fermentationPreset: null,
       fermentationSchedule: {
         mode: 'MIXED',

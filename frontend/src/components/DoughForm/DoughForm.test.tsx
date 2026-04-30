@@ -63,8 +63,30 @@ describe('DoughForm', () => {
     expect(screen.queryByRole('spinbutton', { name: 'Room hours h' })).toBeNull()
     await waitFor(() => {
       expect(readFormState()).toMatchObject({
+        fermentationMode: 'PRESET',
         fermentationPreset: 'ROOM_24H',
-        fermentationSchedule: null,
+        fermentationSchedule: {
+          mode: 'MIXED',
+          roomHours: 12,
+          roomTemperatureCelsius: 21.5,
+          coldHours: 18,
+          coldTemperatureCelsius: 4.5,
+        },
+      })
+    })
+
+    await userEvent.click(screen.getByRole('button', { name: 'Manual' }))
+
+    await waitFor(() => {
+      expect(readFormState()).toMatchObject({
+        fermentationMode: 'MANUAL',
+        fermentationSchedule: {
+          mode: 'MIXED',
+          roomHours: 12,
+          roomTemperatureCelsius: 21.5,
+          coldHours: 18,
+          coldTemperatureCelsius: 4.5,
+        },
       })
     })
   })
@@ -75,6 +97,7 @@ describe('DoughForm', () => {
         initialForm={{
           ...defaultForm,
           doughMethod: 'DIRECT',
+          fermentationMode: 'MANUAL',
           fermentationSchedule: {
             mode: 'COLD',
             roomHours: 0,
@@ -106,6 +129,7 @@ describe('DoughForm', () => {
         initialForm={{
           ...defaultForm,
           doughMethod: 'POOLISH',
+          fermentationMode: 'MANUAL',
           fermentationSchedule: {
             mode: 'MIXED',
             roomHours: 12,
@@ -155,10 +179,11 @@ function DoughFormHarness({ initialForm = defaultForm }: { initialForm?: FormSta
       ),
     [form.doughMethod],
   )
-  const selectedPreset = form.fermentationSchedule
-    ? undefined
-    : compatiblePresets.find((preset) => preset.code === form.fermentationPreset) ??
-      compatiblePresets[0]
+  const selectedPreset =
+    form.fermentationMode === 'MANUAL'
+      ? undefined
+      : compatiblePresets.find((preset) => preset.code === form.fermentationPreset) ??
+        compatiblePresets[0]
 
   return (
     <>

@@ -12,6 +12,7 @@ export function applyRecipeFormulaToForm(
     saltPercent: formula.saltPercent,
     yeastType: formula.yeastType,
     doughMethod: formula.doughMethod,
+    fermentationMode: formula.fermentationSchedule ? 'MANUAL' : 'PRESET',
     fermentationPreset: formula.fermentationSchedule
       ? null
       : formula.fermentationPreset ?? current.fermentationPreset,

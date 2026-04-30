@@ -561,6 +561,7 @@ function RecipeManagerHarness() {
     saltPercent: 2.9,
     yeastType: 'ACTIVE_DRY',
     doughMethod: 'DIRECT',
+    fermentationMode: 'PRESET',
     fermentationPreset: 'COLD_24H',
     fermentationSchedule: null,
     roomTemperatureCelsius: 20,
@@ -575,7 +576,7 @@ function RecipeManagerHarness() {
     [form.doughMethod],
   )
   const selectedPreset =
-    form.fermentationSchedule
+    form.fermentationMode === 'MANUAL'
       ? undefined
       : compatiblePresets.find((preset) => preset.code === form.fermentationPreset) ??
         compatiblePresets[0]

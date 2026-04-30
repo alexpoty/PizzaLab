@@ -45,6 +45,7 @@ describe('buildFermentationTimeline', () => {
     const form: FormState = {
       ...defaultForm,
       doughMethod: 'POOLISH',
+      fermentationMode: 'MANUAL',
       fermentationPreset: 'POOLISH_ROOM_16H_COLD_24H',
       fermentationSchedule: {
         mode: 'MIXED',

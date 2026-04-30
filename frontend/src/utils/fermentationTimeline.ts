@@ -114,7 +114,7 @@ function resolveFermentationTimeline(
   form: FormState,
   selectedPreset: PresetMetadata | undefined,
 ): ResolvedFermentationTimeline {
-  if (form.fermentationSchedule) {
+  if (form.fermentationMode === 'MANUAL' && form.fermentationSchedule) {
     return form.fermentationSchedule
   }
 

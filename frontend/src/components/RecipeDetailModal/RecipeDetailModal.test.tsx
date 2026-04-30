@@ -164,6 +164,7 @@ function RecipeDetailModalHarness({
     saltPercent: 2.8,
     yeastType: 'INSTANT',
     doughMethod: 'POOLISH',
+    fermentationMode: 'PRESET',
     fermentationPreset: 'ROOM_24H',
     fermentationSchedule: null,
     roomTemperatureCelsius: 20,
@@ -180,8 +181,10 @@ function RecipeDetailModalHarness({
   )
 
   const selectedPreset =
-    compatiblePresets.find((preset) => preset.code === form.fermentationPreset) ??
-    compatiblePresets[0]
+    form.fermentationMode === 'MANUAL'
+      ? undefined
+      : compatiblePresets.find((preset) => preset.code === form.fermentationPreset) ??
+        compatiblePresets[0]
 
   return (
     <RecipeDetailModal

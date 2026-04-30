@@ -70,10 +70,11 @@ function ResultsPanelHarness() {
       ),
     [form.doughMethod],
   )
-  const selectedPreset = form.fermentationSchedule
-    ? undefined
-    : compatiblePresets.find((preset) => preset.code === form.fermentationPreset) ??
-      compatiblePresets[0]
+  const selectedPreset =
+    form.fermentationMode === 'MANUAL'
+      ? undefined
+      : compatiblePresets.find((preset) => preset.code === form.fermentationPreset) ??
+        compatiblePresets[0]
 
   return (
     <>
