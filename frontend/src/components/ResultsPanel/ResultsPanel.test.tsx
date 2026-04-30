@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { useMemo, useState } from 'react'
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { defaultForm, defaultMetadata } from '../../data/doughDefaults'
@@ -45,10 +45,8 @@ describe('ResultsPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Manual' }))
     await user.click(screen.getByRole('button', { name: 'Poolish' }))
 
-    await user.clear(screen.getByRole('spinbutton', { name: 'Room hours h' }))
-    await user.type(screen.getByRole('spinbutton', { name: 'Room hours h' }), '16')
-    await user.clear(screen.getByRole('spinbutton', { name: 'Cold hours h' }))
-    await user.type(screen.getByRole('spinbutton', { name: 'Cold hours h' }), '24')
+    setNumberField('Room hours h', '16')
+    setNumberField('Cold hours h', '24')
 
     await waitFor(() => {
       expect(results.getByText('Mix poolish')).toBeTruthy()
@@ -97,4 +95,8 @@ function ResultsPanelHarness() {
       />
     </>
   )
+}
+
+function setNumberField(name: string, value: string) {
+  fireEvent.change(screen.getByRole('spinbutton', { name }), { target: { value } })
 }

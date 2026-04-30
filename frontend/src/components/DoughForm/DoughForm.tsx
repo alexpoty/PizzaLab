@@ -24,7 +24,15 @@ type DoughFormProps = {
   className?: string
 }
 
-function deriveManualMode(roomHours: number, coldHours: number): FermentationSchedule['mode'] {
+function deriveManualMode(
+  doughMethod: FormState['doughMethod'],
+  roomHours: number,
+  coldHours: number,
+): FermentationSchedule['mode'] {
+  if (isPrefermentMethod(doughMethod) && coldHours > 0) {
+    return 'MIXED'
+  }
+
   if (roomHours > 0 && coldHours > 0) {
     return 'MIXED'
   }
@@ -43,13 +51,46 @@ function buildManualSchedule(
   const roomHours = selectedPreset?.roomHours ?? 24
   const coldHours = selectedPreset?.coldHours ?? 0
 
+  return normalizeManualSchedule(
+    {
+      mode: deriveManualMode(form.doughMethod, roomHours, coldHours),
+      roomHours,
+      roomTemperatureCelsius: form.roomTemperatureCelsius,
+      coldHours,
+      coldTemperatureCelsius: form.coldTemperatureCelsius,
+    },
+    form.doughMethod,
+  )
+}
+
+function normalizeManualSchedule(
+  schedule: FermentationSchedule,
+  doughMethod: FormState['doughMethod'],
+): FermentationSchedule {
+  const roomHours =
+    isPrefermentMethod(doughMethod) && schedule.coldHours > 0
+      ? Math.max(schedule.roomHours, 1)
+      : schedule.roomHours
+
   return {
-    mode: deriveManualMode(roomHours, coldHours),
+    ...schedule,
     roomHours,
-    roomTemperatureCelsius: form.roomTemperatureCelsius,
-    coldHours,
-    coldTemperatureCelsius: form.coldTemperatureCelsius,
+    mode: deriveManualMode(doughMethod, roomHours, schedule.coldHours),
   }
+}
+
+function updateManualSchedule(
+  current: FormState,
+  selectedPreset: PresetMetadata | undefined,
+  update: (schedule: FermentationSchedule) => FermentationSchedule,
+): FermentationSchedule {
+  const schedule = current.fermentationSchedule ?? buildManualSchedule(current, selectedPreset)
+
+  return normalizeManualSchedule(update(schedule), current.doughMethod)
+}
+
+function isPrefermentMethod(method: FormState['doughMethod']): boolean {
+  return method !== 'DIRECT'
 }
 
 function getCompatiblePresetCode(
@@ -61,6 +102,14 @@ function getCompatiblePresetCode(
   }
 
   return presets[0]?.code ?? null
+}
+
+function getPrefermentFlourPercent(method: FormState['doughMethod']): number {
+  if (method === 'DIRECT') {
+    return 30
+  }
+
+  return method === 'BIGA' ? 45 : 30
 }
 
 export function DoughForm({
@@ -103,8 +152,10 @@ export function DoughForm({
                   ),
                   current.fermentationPreset,
                 ),
-                fermentationSchedule: current.fermentationSchedule,
-                prefermentFlourPercent: method === 'BIGA' ? 45 : 30,
+                fermentationSchedule: current.fermentationSchedule
+                  ? normalizeManualSchedule(current.fermentationSchedule, method)
+                  : null,
+                prefermentFlourPercent: getPrefermentFlourPercent(method),
               }))
             }
           >
@@ -230,17 +281,13 @@ export function DoughForm({
               step={1}
               value={manualSchedule.roomHours}
               onChange={(roomHours) =>
-                setForm((current) => {
-                  const schedule = current.fermentationSchedule ?? buildManualSchedule(current, selectedPreset)
-                  return {
-                    ...current,
-                    fermentationSchedule: {
-                      ...schedule,
-                      roomHours,
-                      mode: deriveManualMode(roomHours, schedule.coldHours),
-                    },
-                  }
-                })
+                setForm((current) => ({
+                  ...current,
+                  fermentationSchedule: updateManualSchedule(current, selectedPreset, (schedule) => ({
+                    ...schedule,
+                    roomHours,
+                  })),
+                }))
               }
             />
             <NumberField
@@ -250,16 +297,13 @@ export function DoughForm({
               step={0.5}
               value={manualSchedule.roomTemperatureCelsius}
               onChange={(roomTemperatureCelsius) =>
-                setForm((current) => {
-                  const schedule = current.fermentationSchedule ?? buildManualSchedule(current, selectedPreset)
-                  return {
-                    ...current,
-                    fermentationSchedule: {
-                      ...schedule,
-                      roomTemperatureCelsius,
-                    },
-                  }
-                })
+                setForm((current) => ({
+                  ...current,
+                  fermentationSchedule: updateManualSchedule(current, selectedPreset, (schedule) => ({
+                    ...schedule,
+                    roomTemperatureCelsius,
+                  })),
+                }))
               }
             />
             <NumberField
@@ -269,17 +313,13 @@ export function DoughForm({
               step={1}
               value={manualSchedule.coldHours}
               onChange={(coldHours) =>
-                setForm((current) => {
-                  const schedule = current.fermentationSchedule ?? buildManualSchedule(current, selectedPreset)
-                  return {
-                    ...current,
-                    fermentationSchedule: {
-                      ...schedule,
-                      coldHours,
-                      mode: deriveManualMode(schedule.roomHours, coldHours),
-                    },
-                  }
-                })
+                setForm((current) => ({
+                  ...current,
+                  fermentationSchedule: updateManualSchedule(current, selectedPreset, (schedule) => ({
+                    ...schedule,
+                    coldHours,
+                  })),
+                }))
               }
             />
             <NumberField
@@ -289,16 +329,13 @@ export function DoughForm({
               step={0.5}
               value={manualSchedule.coldTemperatureCelsius}
               onChange={(coldTemperatureCelsius) =>
-                setForm((current) => {
-                  const schedule = current.fermentationSchedule ?? buildManualSchedule(current, selectedPreset)
-                  return {
-                    ...current,
-                    fermentationSchedule: {
-                      ...schedule,
-                      coldTemperatureCelsius,
-                    },
-                  }
-                })
+                setForm((current) => ({
+                  ...current,
+                  fermentationSchedule: updateManualSchedule(current, selectedPreset, (schedule) => ({
+                    ...schedule,
+                    coldTemperatureCelsius,
+                  })),
+                }))
               }
             />
           </>
