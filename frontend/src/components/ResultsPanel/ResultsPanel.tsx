@@ -18,8 +18,10 @@ export function ResultsPanel({
   timelineStartedAt,
 }: ResultsPanelProps) {
   return (
-    <section className="results-panel" aria-live="polite">
-      {result ? <Results result={result} /> : <EmptyResults />}
+    <section className="results-panel">
+      <div className="results-live-region" aria-live="polite">
+        {result ? <Results result={result} /> : <EmptyResults />}
+      </div>
       <FermentationTimelinePanel
         form={form}
         selectedPreset={selectedPreset}
