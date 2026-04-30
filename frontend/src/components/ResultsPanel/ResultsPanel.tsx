@@ -1,16 +1,30 @@
 import './ResultsPanel.scss'
 import { DoughResultBreakdown } from '../DoughResultBreakdown'
-import type { DoughCalculationResponse } from '../../types/dough'
+import { FermentationTimelinePanel } from '../FermentationTimelinePanel'
+import type { DoughCalculationResponse, FormState, PresetMetadata } from '../../types/dough'
 import { formatGram } from '../../utils/format'
 
 type ResultsPanelProps = {
   result: DoughCalculationResponse | null
+  form: FormState
+  selectedPreset: PresetMetadata | undefined
+  timelineStartedAt?: Date
 }
 
-export function ResultsPanel({ result }: ResultsPanelProps) {
+export function ResultsPanel({
+  result,
+  form,
+  selectedPreset,
+  timelineStartedAt,
+}: ResultsPanelProps) {
   return (
     <section className="results-panel" aria-live="polite">
       {result ? <Results result={result} /> : <EmptyResults />}
+      <FermentationTimelinePanel
+        form={form}
+        selectedPreset={selectedPreset}
+        startedAt={timelineStartedAt}
+      />
     </section>
   )
 }

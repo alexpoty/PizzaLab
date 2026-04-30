@@ -50,7 +50,7 @@ function App() {
             isLoading={isLoading}
             onSubmit={calculate}
           />
-          <ResultsPanel result={result} />
+          <ResultsPanel result={result} form={form} selectedPreset={selectedPreset} />
         </section>
 
         <RecipeManager
