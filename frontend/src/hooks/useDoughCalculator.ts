@@ -23,7 +23,7 @@ export function useDoughCalculator() {
       ),
     [form.doughMethod, metadata.fermentationPresets],
   )
-  const selectedPreset = form.fermentationSchedule
+  const selectedPreset = form.fermentationMode === 'MANUAL'
     ? undefined
     : compatiblePresets.find((preset) => preset.code === form.fermentationPreset) ??
       compatiblePresets[0]

@@ -3,6 +3,7 @@ import type { Dispatch, SetStateAction } from 'react'
 import { methodLabels, yeastLabels } from '../../data/doughDefaults'
 import type {
   DoughMetadata,
+  FermentationSchedule,
   FermentationPreset,
   FormState,
   PresetMetadata,
@@ -23,6 +24,94 @@ type DoughFormProps = {
   className?: string
 }
 
+function deriveManualMode(
+  doughMethod: FormState['doughMethod'],
+  roomHours: number,
+  coldHours: number,
+): FermentationSchedule['mode'] {
+  if (isPrefermentMethod(doughMethod) && coldHours > 0) {
+    return 'MIXED'
+  }
+
+  if (roomHours > 0 && coldHours > 0) {
+    return 'MIXED'
+  }
+
+  if (coldHours > 0) {
+    return 'COLD'
+  }
+
+  return 'ROOM'
+}
+
+function buildManualSchedule(
+  form: FormState,
+  selectedPreset: PresetMetadata | undefined,
+): FermentationSchedule {
+  const roomHours = selectedPreset?.roomHours ?? 24
+  const coldHours = selectedPreset?.coldHours ?? 0
+
+  return normalizeManualSchedule(
+    {
+      mode: deriveManualMode(form.doughMethod, roomHours, coldHours),
+      roomHours,
+      roomTemperatureCelsius: form.roomTemperatureCelsius,
+      coldHours,
+      coldTemperatureCelsius: form.coldTemperatureCelsius,
+    },
+    form.doughMethod,
+  )
+}
+
+function normalizeManualSchedule(
+  schedule: FermentationSchedule,
+  doughMethod: FormState['doughMethod'],
+): FermentationSchedule {
+  const roomHours =
+    isPrefermentMethod(doughMethod) && schedule.coldHours > 0
+      ? Math.max(schedule.roomHours, 1)
+      : schedule.roomHours
+
+  return {
+    ...schedule,
+    roomHours,
+    mode: deriveManualMode(doughMethod, roomHours, schedule.coldHours),
+  }
+}
+
+function updateManualSchedule(
+  current: FormState,
+  selectedPreset: PresetMetadata | undefined,
+  update: (schedule: FermentationSchedule) => FermentationSchedule,
+): FermentationSchedule {
+  const schedule = current.fermentationSchedule ?? buildManualSchedule(current, selectedPreset)
+
+  return normalizeManualSchedule(update(schedule), current.doughMethod)
+}
+
+function isPrefermentMethod(method: FormState['doughMethod']): boolean {
+  return method !== 'DIRECT'
+}
+
+function getCompatiblePresetCode(
+  presets: PresetMetadata[],
+  preset: FermentationPreset | null,
+): FermentationPreset | null {
+  if (preset && presets.some((item) => item.code === preset)) {
+    return preset
+  }
+
+  return presets[0]?.code ?? null
+}
+
+function getPrefermentFlourPercent(method: FormState['doughMethod']): number {
+  if (method === 'DIRECT') {
+    return 30
+  }
+
+  return method === 'BIGA' ? 45 : 30
+}
+
 export function DoughForm({
   metadata,
   form,
@@ -35,6 +124,9 @@ export function DoughForm({
   submitLabel = 'Calculate dough',
   className = 'control-panel',
 }: DoughFormProps) {
+  const isManualMode = form.fermentationMode === 'MANUAL'
+  const manualSchedule = form.fermentationSchedule
+
   return (
     <form
       className={className}
@@ -54,12 +146,16 @@ export function DoughForm({
               setForm((current) => ({
                 ...current,
                 doughMethod: method,
-                fermentationPreset:
-                  metadata.fermentationPresets.find((preset) =>
+                fermentationPreset: getCompatiblePresetCode(
+                  metadata.fermentationPresets.filter((preset) =>
                     preset.compatibleDoughMethods.includes(method),
-                  )?.code ?? current.fermentationPreset,
-                fermentationSchedule: null,
-                prefermentFlourPercent: method === 'BIGA' ? 45 : 30,
+                  ),
+                  current.fermentationPreset,
+                ),
+                fermentationSchedule: current.fermentationSchedule
+                  ? normalizeManualSchedule(current.fermentationSchedule, method)
+                  : null,
+                prefermentFlourPercent: getPrefermentFlourPercent(method),
               }))
             }
           >
@@ -117,51 +213,159 @@ export function DoughForm({
       )}
 
       <div className="section-title">Fermentation</div>
-      <label className="select-field">
-        <span>Preset</span>
-        <select
-          value={form.fermentationSchedule ? 'MANUAL' : selectedPreset?.code ?? form.fermentationPreset ?? ''}
-          onChange={(event) =>
+      <div className="segmented-control segmented-control--dual" aria-label="Fermentation mode">
+        <button
+          type="button"
+          className={isManualMode ? '' : 'active'}
+          onClick={() =>
             setForm((current) => ({
               ...current,
-              fermentationPreset: event.target.value as FermentationPreset,
-              fermentationSchedule: null,
+              fermentationMode: 'PRESET',
+              fermentationPreset: getCompatiblePresetCode(
+                compatiblePresets,
+                current.fermentationPreset,
+              ),
             }))
           }
         >
-          {form.fermentationSchedule && <option value="MANUAL">Manual schedule</option>}
-          {compatiblePresets.map((preset) => (
-            <option key={preset.code} value={preset.code}>
-              {preset.label}
-            </option>
-          ))}
-        </select>
-      </label>
+          Preset
+        </button>
+        <button
+          type="button"
+          className={isManualMode ? 'active' : ''}
+          onClick={() =>
+            setForm((current) => ({
+              ...current,
+              fermentationMode: 'MANUAL',
+              fermentationPreset: getCompatiblePresetCode(
+                compatiblePresets,
+                current.fermentationPreset,
+              ),
+              fermentationSchedule:
+                current.fermentationSchedule ?? buildManualSchedule(current, selectedPreset),
+            }))
+          }
+        >
+          Manual
+        </button>
+      </div>
+
+      {!isManualMode && (
+        <label className="select-field">
+          <span>Preset</span>
+          <select
+            value={selectedPreset?.code ?? form.fermentationPreset ?? ''}
+            onChange={(event) =>
+              setForm((current) => ({
+                ...current,
+                fermentationPreset: event.target.value as FermentationPreset,
+              }))
+            }
+          >
+            {compatiblePresets.map((preset) => (
+              <option key={preset.code} value={preset.code}>
+                {preset.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
 
       <div className="field-grid">
-        {selectedPreset?.requiresRoomTemperature && (
-          <NumberField
-            label="Room temp"
-            suffix="C"
-            min={1}
-            step={0.5}
-            value={form.roomTemperatureCelsius}
-            onChange={(roomTemperatureCelsius) =>
-              setForm((current) => ({ ...current, roomTemperatureCelsius }))
-            }
-          />
-        )}
-        {selectedPreset?.requiresColdTemperature && (
-          <NumberField
-            label="Fridge temp"
-            suffix="C"
-            min={1}
-            step={0.5}
-            value={form.coldTemperatureCelsius}
-            onChange={(coldTemperatureCelsius) =>
-              setForm((current) => ({ ...current, coldTemperatureCelsius }))
-            }
-          />
+        {isManualMode && manualSchedule ? (
+          <>
+            <NumberField
+              label="Room hours"
+              suffix="h"
+              min={0}
+              step={1}
+              value={manualSchedule.roomHours}
+              onChange={(roomHours) =>
+                setForm((current) => ({
+                  ...current,
+                  fermentationSchedule: updateManualSchedule(current, selectedPreset, (schedule) => ({
+                    ...schedule,
+                    roomHours,
+                  })),
+                }))
+              }
+            />
+            <NumberField
+              label="Room temp"
+              suffix="C"
+              min={1}
+              step={0.5}
+              value={manualSchedule.roomTemperatureCelsius}
+              onChange={(roomTemperatureCelsius) =>
+                setForm((current) => ({
+                  ...current,
+                  fermentationSchedule: updateManualSchedule(current, selectedPreset, (schedule) => ({
+                    ...schedule,
+                    roomTemperatureCelsius,
+                  })),
+                }))
+              }
+            />
+            <NumberField
+              label="Cold hours"
+              suffix="h"
+              min={0}
+              step={1}
+              value={manualSchedule.coldHours}
+              onChange={(coldHours) =>
+                setForm((current) => ({
+                  ...current,
+                  fermentationSchedule: updateManualSchedule(current, selectedPreset, (schedule) => ({
+                    ...schedule,
+                    coldHours,
+                  })),
+                }))
+              }
+            />
+            <NumberField
+              label="Fridge temp"
+              suffix="C"
+              min={1}
+              step={0.5}
+              value={manualSchedule.coldTemperatureCelsius}
+              onChange={(coldTemperatureCelsius) =>
+                setForm((current) => ({
+                  ...current,
+                  fermentationSchedule: updateManualSchedule(current, selectedPreset, (schedule) => ({
+                    ...schedule,
+                    coldTemperatureCelsius,
+                  })),
+                }))
+              }
+            />
+          </>
+        ) : (
+          <>
+            {selectedPreset?.requiresRoomTemperature && (
+              <NumberField
+                label="Room temp"
+                suffix="C"
+                min={1}
+                step={0.5}
+                value={form.roomTemperatureCelsius}
+                onChange={(roomTemperatureCelsius) =>
+                  setForm((current) => ({ ...current, roomTemperatureCelsius }))
+                }
+              />
+            )}
+            {selectedPreset?.requiresColdTemperature && (
+              <NumberField
+                label="Fridge temp"
+                suffix="C"
+                min={1}
+                step={0.5}
+                value={form.coldTemperatureCelsius}
+                onChange={(coldTemperatureCelsius) =>
+                  setForm((current) => ({ ...current, coldTemperatureCelsius }))
+                }
+              />
+            )}
+          </>
         )}
         <label className="select-field">
           <span>Yeast</span>

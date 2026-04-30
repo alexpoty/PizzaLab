@@ -17,6 +17,8 @@ export type FermentationSchedule = {
   coldTemperatureCelsius: number
 }
 
+export type FermentationMode = 'PRESET' | 'MANUAL'
+
 export type PresetMetadata = {
   code: FermentationPreset
   label: string
@@ -70,6 +72,7 @@ export type FormState = {
   saltPercent: number
   yeastType: YeastType
   doughMethod: DoughMethod
+  fermentationMode: FermentationMode
   fermentationPreset: FermentationPreset | null
   fermentationSchedule: FermentationSchedule | null
   roomTemperatureCelsius: number

@@ -61,6 +61,23 @@ const editedFormula: DoughCalculationRequest = {
   prefermentFlourPercent: 30,
 }
 
+const manualFormula: DoughCalculationRequest = {
+  pizzaCount: 4,
+  doughBallWeightGrams: 250,
+  hydrationPercent: 65,
+  saltPercent: 2.8,
+  yeastType: 'INSTANT',
+  doughMethod: 'DIRECT',
+  fermentationPreset: null,
+  fermentationSchedule: {
+    mode: 'MIXED',
+    roomHours: 12,
+    roomTemperatureCelsius: 21.5,
+    coldHours: 18,
+    coldTemperatureCelsius: 4.5,
+  },
+}
+
 const calculationResult: DoughCalculationResponse = {
   flourGrams: 1000,
   waterGrams: 650,
@@ -333,6 +350,51 @@ describe('RecipeManager', () => {
     })
   })
 
+  it('saves manual fermentation schedules from the recipe modal', async () => {
+    const initialRecipe: Recipe = {
+      id: 'recipe-1',
+      name: 'Manual candidate',
+      formula: originalFormula,
+      createdAt: '2026-04-27T00:00:00Z',
+    }
+    const updatedRecipe: Recipe = {
+      ...initialRecipe,
+      formula: manualFormula,
+    }
+
+    vi.mocked(fetchRecipes).mockResolvedValue([initialRecipe])
+    vi.mocked(deleteRecipe).mockResolvedValue(undefined)
+    vi.mocked(updateRecipe).mockResolvedValue(updatedRecipe)
+    vi.mocked(calculateDough).mockResolvedValue(calculationResult)
+
+    render(<RecipeManagerHarness />)
+
+    await userEvent.click(await screen.findByText('Manual candidate'))
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit recipe' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Manual' }))
+
+    await userEvent.clear(screen.getByRole('spinbutton', { name: 'Room hours h' }))
+    await userEvent.type(screen.getByRole('spinbutton', { name: 'Room hours h' }), '12')
+    await userEvent.clear(screen.getByRole('spinbutton', { name: 'Room temp C' }))
+    await userEvent.type(screen.getByRole('spinbutton', { name: 'Room temp C' }), '21.5')
+    await userEvent.clear(screen.getByRole('spinbutton', { name: 'Cold hours h' }))
+    await userEvent.type(screen.getByRole('spinbutton', { name: 'Cold hours h' }), '18')
+    await userEvent.clear(screen.getByRole('spinbutton', { name: 'Fridge temp C' }))
+    await userEvent.type(screen.getByRole('spinbutton', { name: 'Fridge temp C' }), '4.5')
+
+    await waitFor(() => {
+      expect(readCurrentFormula()).toEqual(manualFormula)
+    })
+
+    await userEvent.click(screen.getByRole('button', { name: 'Update recipe' }))
+
+    expect(updateRecipe).toHaveBeenCalledWith('recipe-1', {
+      name: 'Manual candidate',
+      formula: manualFormula,
+    })
+    expect(calculateDough).toHaveBeenNthCalledWith(2, manualFormula)
+  })
+
   it('keeps delete available when recipe preview calculation fails', async () => {
     const failingRecipe: Recipe = {
       id: 'recipe-1',
@@ -499,6 +561,7 @@ function RecipeManagerHarness() {
     saltPercent: 2.9,
     yeastType: 'ACTIVE_DRY',
     doughMethod: 'DIRECT',
+    fermentationMode: 'PRESET',
     fermentationPreset: 'COLD_24H',
     fermentationSchedule: null,
     roomTemperatureCelsius: 20,
@@ -513,7 +576,7 @@ function RecipeManagerHarness() {
     [form.doughMethod],
   )
   const selectedPreset =
-    form.fermentationSchedule
+    form.fermentationMode === 'MANUAL'
       ? undefined
       : compatiblePresets.find((preset) => preset.code === form.fermentationPreset) ??
         compatiblePresets[0]

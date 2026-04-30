@@ -80,6 +80,42 @@ describe('RecipeDetailModal', () => {
     expect(screen.getByText('POOLISH')).toBeTruthy()
   })
 
+  it('renders manual fermentation details for manual formulas', () => {
+    const manualRecipe: Recipe = {
+      id: 'recipe-manual',
+      name: 'Manual dough',
+      createdAt: '2026-04-27T00:10:00Z',
+      formula: {
+        pizzaCount: 4,
+        doughBallWeightGrams: 250,
+        hydrationPercent: 65,
+        saltPercent: 2.8,
+        yeastType: 'INSTANT',
+        doughMethod: 'DIRECT',
+        fermentationPreset: null,
+        fermentationSchedule: {
+          mode: 'MIXED',
+          roomHours: 12,
+          roomTemperatureCelsius: 21.5,
+          coldHours: 18,
+          coldTemperatureCelsius: 4.5,
+        },
+      },
+    }
+
+    render(
+      <RecipeDetailModalHarness
+        mode="view"
+        recipeOverride={manualRecipe}
+        result={result}
+        resultError={null}
+      />,
+    )
+
+    expect(screen.getByText('Manual')).toBeTruthy()
+    expect(screen.getByText('12h room @ 21.5C, 18h cold @ 4.5C')).toBeTruthy()
+  })
+
   it('renders edit mode form and fires save/cancel actions', async () => {
     const onSave = vi.fn()
     const onCancelEdit = vi.fn()
@@ -108,12 +144,14 @@ describe('RecipeDetailModal', () => {
 
 function RecipeDetailModalHarness({
   mode,
+  recipeOverride,
   result,
   resultError,
   onSave = vi.fn(),
   onCancelEdit = vi.fn(),
 }: {
   mode: 'view' | 'edit' | 'duplicate'
+  recipeOverride?: Recipe
   result: DoughCalculationResponse | null
   resultError: string | null
   onSave?: () => void
@@ -126,6 +164,7 @@ function RecipeDetailModalHarness({
     saltPercent: 2.8,
     yeastType: 'INSTANT',
     doughMethod: 'POOLISH',
+    fermentationMode: 'PRESET',
     fermentationPreset: 'ROOM_24H',
     fermentationSchedule: null,
     roomTemperatureCelsius: 20,
@@ -142,15 +181,17 @@ function RecipeDetailModalHarness({
   )
 
   const selectedPreset =
-    compatiblePresets.find((preset) => preset.code === form.fermentationPreset) ??
-    compatiblePresets[0]
+    form.fermentationMode === 'MANUAL'
+      ? undefined
+      : compatiblePresets.find((preset) => preset.code === form.fermentationPreset) ??
+        compatiblePresets[0]
 
   return (
     <RecipeDetailModal
-      recipe={recipe}
+      recipe={recipeOverride ?? recipe}
       result={result}
       mode={mode}
-      recipeName={recipe.name}
+      recipeName={(recipeOverride ?? recipe).name}
       sourceRecipeName={null}
       isLoading={false}
       metadata={defaultMetadata}

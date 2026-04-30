@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { calculateDough } from '../../api/doughApi'
-import type { Recipe } from '../../types/recipe'
-import type { RecipeComparison } from './recipeManagerTypes'
-import { getErrorMessage } from './recipeManagerUtils'
+import { calculateDough } from '../../../api/doughApi'
+import type { Recipe } from '../../../types/recipe'
+import type { RecipeComparison } from '../lib/recipeManagerTypes'
+import { getErrorMessage } from '../lib/recipeManagerUtils'
 
 type UseRecipeComparisonArgs = {
   recipes: Recipe[]
@@ -22,15 +22,18 @@ export function useRecipeComparison({
     () => selectedRecipeIds.filter((recipeId) => recipes.some((recipe) => recipe.id === recipeId)),
     [recipes, selectedRecipeIds],
   )
+  const selectedRecipes = useMemo(
+    () =>
+      comparisonRecipeIds
+        .map((recipeId) => recipes.find((recipe) => recipe.id === recipeId) ?? null)
+        .filter((recipe): recipe is Recipe => recipe !== null),
+    [comparisonRecipeIds, recipes],
+  )
 
   useEffect(() => {
-    if (comparisonRecipeIds.length < 2) {
+    if (selectedRecipes.length < 2) {
       return
     }
-
-    const selectedRecipes = comparisonRecipeIds
-      .map((recipeId) => recipes.find((recipe) => recipe.id === recipeId) ?? null)
-      .filter((recipe): recipe is Recipe => recipe !== null)
 
     let isMounted = true
     setIsLoading(true)
@@ -67,7 +70,7 @@ export function useRecipeComparison({
       isMounted = false
       setIsLoading(false)
     }
-  }, [comparisonRecipeIds, recipes, setIsLoading, setPanelError])
+  }, [selectedRecipes, setIsLoading, setPanelError])
 
   const toggleCompareRecipe = (recipe: Recipe) => {
     setComparison(null)

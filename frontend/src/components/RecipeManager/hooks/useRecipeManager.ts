@@ -1,5 +1,5 @@
-import type { DoughCalculationRequest } from '../../types/dough'
-import type { ErrorTarget } from './recipeManagerTypes'
+import type { DoughCalculationRequest } from '../../../types/dough'
+import type { ErrorTarget } from '../lib/recipeManagerTypes'
 import { useRecipeComparison } from './useRecipeComparison'
 import { useRecipeCrud } from './useRecipeCrud'
 import { useRecipeModalState } from './useRecipeModalState'
@@ -69,30 +69,40 @@ export function useRecipeManager({ formula, onLoadRecipe }: UseRecipeManagerArgs
   }
 
   return {
-    recipes,
-    preview,
-    comparison,
-    modalMode,
-    modalRecipe,
-    modalRecipeName,
-    sourceRecipeName,
-    newRecipeName,
-    activeRecipeId,
-    comparisonRecipeIds,
-    isLoading,
-    panelError,
-    modalError,
-    setNewRecipeName,
-    setModalRecipeName,
-    saveNewRecipe,
-    removeRecipe,
-    openRecipe,
-    startEditingRecipe,
-    startDuplicateRecipe,
-    saveModalRecipe,
-    previewModalRecipe,
-    toggleCompareRecipe,
-    clearComparisonSelection,
-    resetModal,
+    list: {
+      recipes,
+      activeRecipeId,
+      openRecipe,
+      removeRecipe,
+    },
+    save: {
+      newRecipeName,
+      setNewRecipeName,
+      saveNewRecipe,
+    },
+    comparison: {
+      data: comparison,
+      recipeIds: comparisonRecipeIds,
+      toggleRecipe: toggleCompareRecipe,
+      clearSelection: clearComparisonSelection,
+    },
+    modal: {
+      preview,
+      mode: modalMode,
+      recipe: modalRecipe,
+      recipeName: modalRecipeName,
+      sourceRecipeName,
+      error: modalError,
+      setRecipeName: setModalRecipeName,
+      startEditing: startEditingRecipe,
+      startDuplicating: startDuplicateRecipe,
+      save: saveModalRecipe,
+      previewRecipe: previewModalRecipe,
+      reset: resetModal,
+    },
+    status: {
+      isLoading,
+      panelError,
+    },
   }
 }

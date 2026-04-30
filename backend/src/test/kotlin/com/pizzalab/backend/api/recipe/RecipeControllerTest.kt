@@ -186,6 +186,36 @@ class RecipeControllerTest(
     }
 
     @Test
+    fun `returns validation error when manual recipe schedule misses required stage fields`() {
+        mockMvc.createRecipe(
+            """
+                {
+                  "name": "Invalid mixed manual schedule",
+                  "formula": {
+                    "pizzaCount": 4,
+                    "doughBallWeightGrams": 250,
+                    "hydrationPercent": 65,
+                    "saltPercent": 2.8,
+                    "yeastType": "INSTANT",
+                    "doughMethod": "POOLISH",
+                    "prefermentFlourPercent": 30,
+                    "fermentationSchedule": {
+                      "mode": "MIXED",
+                      "roomHours": 16,
+                      "roomTemperatureCelsius": 20,
+                      "coldHours": 24
+                    }
+                  }
+                }
+            """.trimIndent(),
+        )
+            .andExpect {
+                status { isBadRequest() }
+                jsonPath("$.message") { value("MIXED mode requires coldTemperatureCelsius.") }
+            }
+    }
+
+    @Test
     fun `persists large numeric formula values accepted by api validation`() {
         mockMvc.createRecipe(largeFormulaPayload())
             .andExpect {

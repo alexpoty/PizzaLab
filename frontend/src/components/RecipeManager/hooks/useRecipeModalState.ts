@@ -1,13 +1,14 @@
-import { useMemo, useRef, useState } from 'react'
-import { calculateDough } from '../../api/doughApi'
-import type { DoughCalculationRequest } from '../../types/dough'
-import type { Recipe } from '../../types/recipe'
-import type { ErrorTarget, ModalMode, RecipePreview } from './recipeManagerTypes'
+import { useMemo, useState } from 'react'
+import { calculateDough } from '../../../api/doughApi'
+import type { DoughCalculationRequest, DoughCalculationResponse } from '../../../types/dough'
+import type { Recipe } from '../../../types/recipe'
+import type { ErrorTarget, ModalMode, RecipePreview } from '../lib/recipeManagerTypes'
 import {
   buildDuplicateRecipeName,
   buildModalRecipe,
   getErrorMessage,
-} from './recipeManagerUtils'
+} from '../lib/recipeManagerUtils'
+import { useLatestRequestGate } from './useLatestRequestGate'
 
 type PersistModalRecipeArgs = {
   mode: ModalMode
@@ -35,7 +36,7 @@ export function useRecipeModalState({
   persistModalRecipe,
   onLoadRecipe,
 }: UseRecipeModalStateArgs) {
-  const activeRequestIdRef = useRef(0)
+  const requestGate = useLatestRequestGate()
   const [loadedRecipe, setLoadedRecipe] = useState<Recipe | null>(null)
   const [preview, setPreview] = useState<RecipePreview | null>(null)
   const [activeRecipeId, setActiveRecipeId] = useState<string | null>(null)
@@ -53,15 +54,21 @@ export function useRecipeModalState({
   }, [formula, modalMode, modalRecipeName, preview])
 
   const openRecipe = async (recipe: Recipe, errorTarget: ErrorTarget = 'modal') => {
-    setPanelError(null)
-    setModalError(null)
+    clearError('panel')
+    clearError('modal')
     setLoadedRecipe(recipe)
     setActiveRecipeId(recipe.id)
     setModalMode('view')
     setSourceRecipeName(null)
     setModalRecipeName(recipe.name)
     onLoadRecipe(recipe.formula)
-    return showRecipe(recipe, errorTarget)
+
+    return runCalculation({
+      recipe,
+      calculationFormula: recipe.formula,
+      errorTarget,
+      buildNextRecipe: () => recipe,
+    })
   }
 
   const startEditingRecipe = () => {
@@ -69,7 +76,7 @@ export function useRecipeModalState({
       return
     }
 
-    setModalError(null)
+    clearError('modal')
     setModalMode('edit')
     setModalRecipeName(loadedRecipe.name)
     setSourceRecipeName(null)
@@ -82,7 +89,7 @@ export function useRecipeModalState({
       return
     }
 
-    setModalError(null)
+    clearError('modal')
     setModalMode('duplicate')
     setSourceRecipeName(loadedRecipe.name)
     setModalRecipeName(buildDuplicateRecipeName(loadedRecipe.name, recipes))
@@ -109,39 +116,16 @@ export function useRecipeModalState({
       return
     }
 
-    const requestId = startRequest()
-    setIsLoading(true)
-    setModalError(null)
-
-    try {
-      const result = await calculateDough(formula)
-      if (!isLatestRequest(requestId)) {
-        return
-      }
-
-      setPreview({
-        recipe: buildModalRecipe(preview.recipe, modalMode, modalRecipeName, formula),
-        result,
-      })
-    } catch (caught) {
-      if (!isLatestRequest(requestId)) {
-        return
-      }
-
-      setPreview({
-        recipe: buildModalRecipe(preview.recipe, modalMode, modalRecipeName, formula),
-        result: null,
-      })
-      setModalError(getErrorMessage(caught, 'Recipe calculation failed'))
-    } finally {
-      if (isLatestRequest(requestId)) {
-        setIsLoading(false)
-      }
-    }
+    await runCalculation({
+      recipe: preview.recipe,
+      calculationFormula: formula,
+      errorTarget: 'modal',
+      buildNextRecipe: (recipe) => buildPreviewRecipe(recipe),
+    })
   }
 
   const resetModal = () => {
-    invalidateRequests()
+    requestGate.invalidateRequests()
 
     if (modalMode !== 'view' && loadedRecipe) {
       onLoadRecipe(loadedRecipe.formula)
@@ -186,45 +170,64 @@ export function useRecipeModalState({
     closeDeletedRecipe,
   }
 
-  async function showRecipe(recipe: Recipe, errorTarget: ErrorTarget) {
-    const requestId = startRequest()
+  async function runCalculation({
+    recipe,
+    calculationFormula,
+    errorTarget,
+    buildNextRecipe,
+  }: {
+    recipe: Recipe
+    calculationFormula: DoughCalculationRequest
+    errorTarget: ErrorTarget
+    buildNextRecipe: (recipe: Recipe) => Recipe
+  }) {
+    const requestId = requestGate.startRequest()
     setIsLoading(true)
     clearError(errorTarget)
 
     try {
-      const result = await calculateDough(recipe.formula)
-      if (!isLatestRequest(requestId)) {
-        return false
-      }
-
-      setPreview({ recipe, result })
-      return true
+      const result = await calculateDough(calculationFormula)
+      return applyCalculationSuccess(requestId, buildNextRecipe(recipe), result)
     } catch (caught) {
-      if (!isLatestRequest(requestId)) {
-        return false
-      }
-
-      setPreview({ recipe, result: null })
-      setErrorMessage(errorTarget, getErrorMessage(caught, 'Recipe calculation failed'))
-      return false
+      return applyCalculationFailure(
+        requestId,
+        buildNextRecipe(recipe),
+        errorTarget,
+        getErrorMessage(caught, 'Recipe calculation failed'),
+      )
     } finally {
-      if (isLatestRequest(requestId)) {
+      if (requestGate.isLatestRequest(requestId)) {
         setIsLoading(false)
       }
     }
   }
 
-  function startRequest() {
-    activeRequestIdRef.current += 1
-    return activeRequestIdRef.current
+  function applyCalculationSuccess(
+    requestId: number,
+    recipe: Recipe,
+    result: DoughCalculationResponse,
+  ) {
+    if (!requestGate.isLatestRequest(requestId)) {
+      return false
+    }
+
+    setPreview({ recipe, result })
+    return true
   }
 
-  function invalidateRequests() {
-    activeRequestIdRef.current += 1
-  }
+  function applyCalculationFailure(
+    requestId: number,
+    recipe: Recipe,
+    errorTarget: ErrorTarget,
+    message: string,
+  ) {
+    if (!requestGate.isLatestRequest(requestId)) {
+      return false
+    }
 
-  function isLatestRequest(requestId: number) {
-    return activeRequestIdRef.current === requestId
+    setPreview({ recipe, result: null })
+    setErrorMessage(errorTarget, message)
+    return false
   }
 
   function clearError(target: ErrorTarget) {
@@ -243,5 +246,9 @@ export function useRecipeModalState({
     }
 
     setPanelError(message)
+  }
+
+  function buildPreviewRecipe(recipe: Recipe) {
+    return buildModalRecipe(recipe, modalMode, modalRecipeName, formula)
   }
 }

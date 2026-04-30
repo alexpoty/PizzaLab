@@ -77,6 +77,13 @@
   text-transform: none;
 }
 
+.recipe-comparison-head small {
+  color: $color-text-soft;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: none;
+}
+
 .recipe-comparison-corner {
   place-content: center start;
 }
