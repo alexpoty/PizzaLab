@@ -1,8 +1,7 @@
 import './ResultsPanel.scss'
-import { DoughResultBreakdown } from '../DoughResultBreakdown'
 import { FermentationTimelinePanel } from '../FermentationTimelinePanel'
+import { CalculatedResults } from './CalculatedResults'
 import type { DoughCalculationResponse, FormState, PresetMetadata } from '../../types/dough'
-import { formatGram } from '../../utils/format'
 
 type ResultsPanelProps = {
   result: DoughCalculationResponse | null
@@ -20,7 +19,7 @@ export function ResultsPanel({
   return (
     <section className="results-panel">
       <div className="results-live-region" aria-live="polite">
-        {result ? <Results result={result} /> : <EmptyResults />}
+        {result ? <CalculatedResults result={result} /> : <EmptyResults />}
       </div>
       <FermentationTimelinePanel
         form={form}
@@ -28,29 +27,6 @@ export function ResultsPanel({
         startedAt={timelineStartedAt}
       />
     </section>
-  )
-}
-
-function Results({ result }: { result: DoughCalculationResponse }) {
-  return (
-    <>
-      <div className="result-header">
-        <div>
-          <p className="eyebrow">Total dough</p>
-          <h2>{formatGram(result.totalDoughWeightGrams)}</h2>
-        </div>
-        <div className="yeast-pill">{formatGram(result.yeastGrams)} yeast</div>
-      </div>
-
-      <DoughResultBreakdown result={result} />
-
-      <div className="yeast-details">
-        <span>{result.yeastCalculation.yeastType}</span>
-        <span>{result.yeastCalculation.selectedYeastPercent}% selected</span>
-        <span>{result.yeastCalculation.freshYeastPercent}% fresh equivalent</span>
-        <span>{result.yeastCalculation.effectiveFermentationHours} effective hours</span>
-      </div>
-    </>
   )
 }
 

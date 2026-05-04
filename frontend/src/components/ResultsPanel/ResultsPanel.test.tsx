@@ -6,6 +6,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { defaultForm, defaultMetadata } from '../../data/doughDefaults'
 import type { FormState } from '../../types/dough'
+import { createDirectDoughResult } from '../../test/factories/doughResult'
 import { DoughForm } from '../DoughForm'
 import { ResultsPanel } from './ResultsPanel'
 
@@ -59,6 +60,16 @@ describe('ResultsPanel', () => {
       expect(results.getAllByText('2 May · 01:30')).toHaveLength(2)
     })
   })
+
+  it('renders calculated results inside the live region without leaking timeline text into it', () => {
+    render(<ResultsPanel result={timelineResult} form={defaultForm} selectedPreset={undefined} />)
+
+    const liveRegion = document.querySelector('.results-live-region')
+
+    expect(liveRegion?.textContent).toContain('Total dough')
+    expect(liveRegion?.textContent).toContain('Why this yeast amount?')
+    expect(liveRegion?.textContent).not.toContain('Timeline')
+  })
 })
 
 function ResultsPanelHarness() {
@@ -101,3 +112,5 @@ function ResultsPanelHarness() {
 function setNumberField(name: string, value: string) {
   fireEvent.change(screen.getByRole('spinbutton', { name }), { target: { value } })
 }
+
+const timelineResult = createDirectDoughResult()

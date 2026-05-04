@@ -3,6 +3,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { calculateDough } from '../../../api/doughApi'
+import { createDirectDoughResult } from '../../../test/factories/doughResult'
 import type { DoughCalculationResponse } from '../../../types/dough'
 import type { Recipe } from '../../../types/recipe'
 import { useRecipeComparison } from './useRecipeComparison'
@@ -16,33 +17,7 @@ vi.mock('../../../api/doughApi', async (importOriginal) => {
   }
 })
 
-const calculationResult: DoughCalculationResponse = {
-  flourGrams: 1000,
-  waterGrams: 650,
-  saltGrams: 28,
-  yeastGrams: 1.5,
-  totalDoughWeightGrams: 1679.5,
-  preferment: null,
-  finalMix: {
-    flourGrams: 1000,
-    waterGrams: 650,
-    saltGrams: 28,
-    yeastGrams: 1.5,
-  },
-  yeastCalculation: {
-    yeastType: 'INSTANT',
-    doughMethod: 'DIRECT',
-    roomEffectHours: 24,
-    coldEffectHours: 0,
-    effectiveFermentationHours: 24,
-    freshYeastPercent: 0.12,
-    selectedYeastPercent: 0.04,
-    freshYeastEquivalentGrams: 1.2,
-    selectedYeastGrams: 0.4,
-    prefermentYeastGrams: 0,
-    finalMixYeastGrams: 0.4,
-  },
-}
+const calculationResult: DoughCalculationResponse = createDirectDoughResult()
 
 function createDeferred<T>() {
   let resolve!: (value: T) => void
