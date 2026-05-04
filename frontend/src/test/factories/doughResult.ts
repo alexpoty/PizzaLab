@@ -84,8 +84,12 @@ export function createPrefermentDoughResult(
     yeastGrams: 2.4,
     totalDoughWeightGrams: 1583,
     ...overrides,
-    preferment: overrides.preferment ?? basePreferment,
+    preferment: hasOwnPrefermentOverride(overrides) ? overrides.preferment ?? null : basePreferment,
     finalMix: { ...baseFinalMix, ...overrides.finalMix },
     yeastCalculation: { ...baseYeastCalculation, ...overrides.yeastCalculation },
   }
+}
+
+function hasOwnPrefermentOverride(overrides: DoughResultOverrides) {
+  return Object.prototype.hasOwnProperty.call(overrides, 'preferment')
 }
