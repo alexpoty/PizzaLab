@@ -49,9 +49,13 @@ const methodFactorCopy = {
 } as const
 
 function formatPercent(value: number) {
-  return `${formatNumber(value)}%`
+  return `${formatPercentNumber(value)}%`
 }
 
 function formatNumber(value: number) {
   return value.toFixed(2).replace(/\.?0+$/, '')
+}
+
+function formatPercentNumber(value: number) {
+  return value.toFixed(4).replace(/\.?0+$/, '')
 }

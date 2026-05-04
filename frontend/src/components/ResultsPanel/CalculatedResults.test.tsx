@@ -44,4 +44,18 @@ describe('CalculatedResults', () => {
     expect(screen.getByText('Instant yeast')).toBeTruthy()
     expect(screen.getByText(/The calculator converts your schedule into/)).toBeTruthy()
   })
+
+  it('preserves nonzero yeast percentage precision for low-yeast cases', () => {
+    const result = createDirectDoughResult({
+      yeastCalculation: {
+        freshYeastPercent: 0.0123,
+        selectedYeastPercent: 0.0041,
+      },
+    })
+
+    render(<CalculatedResults result={result} />)
+
+    expect(screen.getByText('0.0041% selected')).toBeTruthy()
+    expect(screen.getByText('0.0123% fresh equivalent')).toBeTruthy()
+  })
 })
