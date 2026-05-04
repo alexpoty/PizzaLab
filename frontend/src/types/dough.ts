@@ -56,6 +56,7 @@ export type DoughCalculationResponse = {
     roomEffectHours: number
     coldEffectHours: number
     effectiveFermentationHours: number
+    methodFactor: number
     freshYeastPercent: number
     selectedYeastPercent: number
     freshYeastEquivalentGrams: number

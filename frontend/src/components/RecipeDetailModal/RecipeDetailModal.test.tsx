@@ -52,6 +52,7 @@ const result: DoughCalculationResponse = {
     roomEffectHours: 24,
     coldEffectHours: 0,
     effectiveFermentationHours: 24,
+    methodFactor: 0.75,
     freshYeastPercent: 0.24,
     selectedYeastPercent: 0.08,
     freshYeastEquivalentGrams: 2.2,

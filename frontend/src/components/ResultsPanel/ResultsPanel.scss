@@ -49,6 +49,79 @@
   font-weight: 700;
 }
 
+.yeast-explanation {
+  margin-top: 18px;
+  border: 1px solid $color-border-panel;
+  border-radius: $radius-sm;
+  background: $color-surface-muted;
+}
+
+.yeast-explanation summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 14px 16px;
+  color: $color-text-strong;
+  font-weight: 700;
+}
+
+.yeast-explanation summary::-webkit-details-marker {
+  display: none;
+}
+
+.yeast-explanation summary::after {
+  content: '+';
+  float: right;
+  color: $color-brand-soft;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.yeast-explanation[open] summary::after {
+  content: '-';
+}
+
+.yeast-explanation__content {
+  padding: 0 16px 16px;
+  color: $color-text-soft;
+}
+
+.yeast-explanation__content p {
+  margin: 0;
+}
+
+.yeast-explanation__list {
+  display: grid;
+  gap: 12px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.yeast-explanation__list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  padding-top: 12px;
+  border-top: 1px solid $color-border-panel;
+}
+
+.yeast-explanation__list li:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.yeast-explanation__list span,
+.yeast-explanation__list strong {
+  color: $color-text-strong;
+}
+
+.yeast-explanation__list p {
+  grid-column: 1 / -1;
+  color: $color-text-soft;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 .empty-results {
   display: grid;
   place-content: center;
@@ -74,5 +147,9 @@
 
   .result-header {
     flex-direction: column;
+  }
+
+  .yeast-explanation__list li {
+    grid-template-columns: 1fr;
   }
 }
