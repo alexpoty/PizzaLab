@@ -7,9 +7,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { RecipeManager } from './RecipeManager'
 import { buildCalculationRequest } from '../../api/doughApi'
 import { defaultMetadata } from '../../data/doughDefaults'
+import { createDirectDoughResult, createPrefermentDoughResult } from '../../test/factories/doughResult'
 import type {
   DoughCalculationRequest,
-  DoughCalculationResponse,
   FormState,
 } from '../../types/dough'
 import type { Recipe } from '../../types/recipe'
@@ -78,67 +78,9 @@ const manualFormula: DoughCalculationRequest = {
   },
 }
 
-const calculationResult: DoughCalculationResponse = {
-  flourGrams: 1000,
-  waterGrams: 650,
-  saltGrams: 28,
-  yeastGrams: 1.5,
-  totalDoughWeightGrams: 1679.5,
-  preferment: null,
-  finalMix: {
-    flourGrams: 1000,
-    waterGrams: 650,
-    saltGrams: 28,
-    yeastGrams: 1.5,
-  },
-  yeastCalculation: {
-    yeastType: 'INSTANT',
-    doughMethod: 'DIRECT',
-    roomEffectHours: 24,
-    coldEffectHours: 0,
-    effectiveFermentationHours: 24,
-    methodFactor: 1,
-    freshYeastPercent: 0.12,
-    selectedYeastPercent: 0.04,
-    freshYeastEquivalentGrams: 1.2,
-    selectedYeastGrams: 0.4,
-    prefermentYeastGrams: 0,
-    finalMixYeastGrams: 0.4,
-  },
-}
+const calculationResult = createDirectDoughResult()
 
-const prefermentCalculationResult: DoughCalculationResponse = {
-  flourGrams: 920,
-  waterGrams: 634.8,
-  saltGrams: 25.8,
-  yeastGrams: 2.4,
-  totalDoughWeightGrams: 1583,
-  preferment: {
-    flourGrams: 276,
-    waterGrams: 276,
-    yeastGrams: 1.2,
-  },
-  finalMix: {
-    flourGrams: 644,
-    waterGrams: 358.8,
-    saltGrams: 25.8,
-    yeastGrams: 1.2,
-  },
-  yeastCalculation: {
-    yeastType: 'INSTANT',
-    doughMethod: 'POOLISH',
-    roomEffectHours: 24,
-    coldEffectHours: 0,
-    effectiveFermentationHours: 24,
-    methodFactor: 0.75,
-    freshYeastPercent: 0.24,
-    selectedYeastPercent: 0.08,
-    freshYeastEquivalentGrams: 2.2,
-    selectedYeastGrams: 0.7,
-    prefermentYeastGrams: 0.35,
-    finalMixYeastGrams: 0.35,
-  },
-}
+const prefermentCalculationResult = createPrefermentDoughResult()
 
 describe('RecipeManager', () => {
   afterEach(() => {

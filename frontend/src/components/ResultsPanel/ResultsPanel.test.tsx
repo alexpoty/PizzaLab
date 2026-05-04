@@ -5,7 +5,8 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { defaultForm, defaultMetadata } from '../../data/doughDefaults'
-import type { DoughCalculationResponse, FormState } from '../../types/dough'
+import type { FormState } from '../../types/dough'
+import { createDirectDoughResult } from '../../test/factories/doughResult'
 import { DoughForm } from '../DoughForm'
 import { ResultsPanel } from './ResultsPanel'
 
@@ -60,55 +61,16 @@ describe('ResultsPanel', () => {
     })
   })
 
-  it('renders expandable yeast explanation details for calculated results', async () => {
-    const user = userEvent.setup()
+  it('renders calculated results inside the live region without leaking timeline text into it', () => {
+    render(<ResultsPanel result={timelineResult} form={defaultForm} selectedPreset={undefined} />)
 
-    render(<ResultsPanel result={calculatedResult} form={defaultForm} selectedPreset={undefined} />)
+    const liveRegion = document.querySelector('.results-live-region')
 
-    const details = document.querySelector('.yeast-explanation')
-
-    expect(details?.hasAttribute('open')).toBe(false)
-    expect(screen.getByText('Why this yeast amount?')).toBeTruthy()
-
-    await user.click(screen.getByText('Why this yeast amount?'))
-
-    expect(details?.hasAttribute('open')).toBe(true)
-    expect(screen.getByText(/The calculator converts your schedule into/)).toBeTruthy()
-    expect(screen.getByText('Method factor')).toBeTruthy()
-    expect(screen.getByText('0.75x')).toBeTruthy()
-    expect(screen.getByText('0.12%')).toBeTruthy()
-    expect(screen.getByText('0.04%')).toBeTruthy()
+    expect(liveRegion?.textContent).toContain('Total dough')
+    expect(liveRegion?.textContent).toContain('Why this yeast amount?')
+    expect(liveRegion?.textContent).not.toContain('Timeline')
   })
 })
-
-const calculatedResult: DoughCalculationResponse = {
-  flourGrams: 1000,
-  waterGrams: 650,
-  saltGrams: 28,
-  yeastGrams: 1.5,
-  totalDoughWeightGrams: 1679.5,
-  preferment: null,
-  finalMix: {
-    flourGrams: 1000,
-    waterGrams: 650,
-    saltGrams: 28,
-    yeastGrams: 1.5,
-  },
-  yeastCalculation: {
-    yeastType: 'INSTANT',
-    doughMethod: 'POOLISH',
-    roomEffectHours: 18,
-    coldEffectHours: 6,
-    effectiveFermentationHours: 24,
-    methodFactor: 0.75,
-    freshYeastPercent: 0.12,
-    selectedYeastPercent: 0.04,
-    freshYeastEquivalentGrams: 1.2,
-    selectedYeastGrams: 0.4,
-    prefermentYeastGrams: 0,
-    finalMixYeastGrams: 0.4,
-  },
-}
 
 function ResultsPanelHarness() {
   const [form, setForm] = useState<FormState>(defaultForm)
@@ -150,3 +112,5 @@ function ResultsPanelHarness() {
 function setNumberField(name: string, value: string) {
   fireEvent.change(screen.getByRole('spinbutton', { name }), { target: { value } })
 }
+
+const timelineResult = createDirectDoughResult()

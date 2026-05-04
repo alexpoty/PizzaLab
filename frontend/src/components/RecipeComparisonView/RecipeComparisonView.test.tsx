@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { RecipeComparisonView } from './RecipeComparisonView'
-import type { DoughCalculationResponse } from '../../types/dough'
+import { createDirectDoughResult, createPrefermentDoughResult } from '../../test/factories/doughResult'
 import type { Recipe } from '../../types/recipe'
 
 const leftRecipe: Recipe = {
@@ -62,67 +62,9 @@ const manualRecipe: Recipe = {
   },
 }
 
-const leftResult: DoughCalculationResponse = {
-  flourGrams: 1000,
-  waterGrams: 650,
-  saltGrams: 28,
-  yeastGrams: 1.5,
-  totalDoughWeightGrams: 1679.5,
-  preferment: null,
-  finalMix: {
-    flourGrams: 1000,
-    waterGrams: 650,
-    saltGrams: 28,
-    yeastGrams: 1.5,
-  },
-  yeastCalculation: {
-    yeastType: 'INSTANT',
-    doughMethod: 'DIRECT',
-    roomEffectHours: 24,
-    coldEffectHours: 0,
-    effectiveFermentationHours: 24,
-    methodFactor: 1,
-    freshYeastPercent: 0.12,
-    selectedYeastPercent: 0.04,
-    freshYeastEquivalentGrams: 1.2,
-    selectedYeastGrams: 0.4,
-    prefermentYeastGrams: 0,
-    finalMixYeastGrams: 0.4,
-  },
-}
+const leftResult = createDirectDoughResult()
 
-const rightResult: DoughCalculationResponse = {
-  flourGrams: 920,
-  waterGrams: 634.8,
-  saltGrams: 25.8,
-  yeastGrams: 2.4,
-  totalDoughWeightGrams: 1583,
-  preferment: {
-    flourGrams: 276,
-    waterGrams: 276,
-    yeastGrams: 1.2,
-  },
-  finalMix: {
-    flourGrams: 644,
-    waterGrams: 358.8,
-    saltGrams: 25.8,
-    yeastGrams: 1.2,
-  },
-  yeastCalculation: {
-    yeastType: 'INSTANT',
-    doughMethod: 'POOLISH',
-    roomEffectHours: 24,
-    coldEffectHours: 0,
-    effectiveFermentationHours: 24,
-    methodFactor: 0.75,
-    freshYeastPercent: 0.24,
-    selectedYeastPercent: 0.08,
-    freshYeastEquivalentGrams: 2.2,
-    selectedYeastGrams: 0.7,
-    prefermentYeastGrams: 0.35,
-    finalMixYeastGrams: 0.35,
-  },
-}
+const rightResult = createPrefermentDoughResult()
 
 describe('RecipeComparisonView', () => {
   it('renders ingredient deltas and clears comparison on button click', async () => {
